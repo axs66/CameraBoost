@@ -2,7 +2,7 @@
 THEOS_PACKAGE_SCHEME ?= rootless
 
 ARCHS = arm64 arm64e
-TARGET = iphone:clang:latest:14.5
+TARGET = iphone:clang:16.5:15.0
 
 include $(THEOS)/makefiles/common.mk
 
@@ -14,3 +14,4 @@ CameraBoost_FRAMEWORKS = UIKit Foundation CoreFoundation
 CameraBoost_PRIVATE_FRAMEWORKS = CameraUI CameraKit
 
 include $(THEOS)/makefiles/tweak.mk
+
