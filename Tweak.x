@@ -4,6 +4,9 @@
 #import <UIKit/UIImage+Private.h>
 #import <UIKit/UIApplication+Private.h>
 #import <version.h>
+#import <CameraUI/UIFont+CameraUIAdditions.h>
+#import <CoreFoundation/CoreFoundation.h>
+#import <CoreText/CoreText.h>
 
 // 全局变量定义
 NSInteger devices[] = { 1, 0, 0, 0, 1, 1 };
@@ -370,11 +373,11 @@ static BOOL shouldHidePauseResumeDuringVideoButton(CAMViewfinderViewController *
 // 项目2: TapVideoConfig 功能
 // ============================================================================
 
-// 注意：以下代码需要 PSHeader 框架，如果编译失败，请移除或替换相关导入
-// #import <PSHeader/CameraApp/CAMCaptureCapabilities.h>
-// #import <PSHeader/CameraApp/CAMControlStatusIndicator.h>
-// #import <PSHeader/CameraApp/CAMUserPreferences.h>
-// #import <PSHeader/CameraApp/CAMViewfinderViewController.h>
+extern NSString *CAMLocalizedFrameworkString(NSString *);
+
+@interface UIFont (CameraUIAdditions)
++ (CGFloat)cui_cameraKerningForFont:(UIFont *)font;
+@end
 
 %hook CAMFramerateIndicatorView
 
@@ -411,20 +414,16 @@ static BOOL shouldHidePauseResumeDuringVideoButton(CAMViewfinderViewController *
             break;
     }
 
-    // 注意：以下代码需要 PSHeader 框架
-    // NSNumberFormatter *formatter = [%c(CAMControlStatusIndicator) integerFormatter];
-    // NSString *resolutionLabel = CAMLocalizedFrameworkString(resolutionLabelFormat);
-    // NSString *framerateLabel = [formatter stringFromNumber:@(toFPS[self.framerate - 1])];
-    // NSString *label = [NSString stringWithFormat:@"%@ · %@", resolutionLabel, framerateLabel];
-
-    // 简化版本，避免 PSHeader 依赖
-    NSString *label = [NSString stringWithFormat:@"Resolution: %ld · FPS: %ld", (long)self.resolution, (long)toFPS[self.framerate - 1]];
+    NSNumberFormatter *formatter = [%c(CAMControlStatusIndicator) integerFormatter];
+    NSString *resolutionLabel = CAMLocalizedFrameworkString(resolutionLabelFormat);
+    NSString *framerateLabel = [formatter stringFromNumber:@(toFPS[self.framerate - 1])];
+    NSString *label = [NSString stringWithFormat:@"%@ · %@", resolutionLabel, framerateLabel];
 
     NSDictionary *attributes = @{
         @"CTFeatureTypeIdentifier": @(35),
         @"CTFeatureSelectorIdentifier": @(2)
     };
-    UIFont *font = [UIFont systemFontOfSize:fontSize];
+    UIFont *font = [UIFont cui_cameraFontOfSize:fontSize];
     UIFontDescriptor *fontDescriptor = [font fontDescriptor];
     NSDictionary *fontAttributes = @{
         (id)kCTFontFeatureSettingsAttribute: attributes
@@ -434,7 +433,7 @@ static BOOL shouldHidePauseResumeDuringVideoButton(CAMViewfinderViewController *
 
     NSDictionary *attributedStringAttributes = @{
         (id)kCTFontAttributeName: newFont,
-        (id)kCTKernAttributeName: @(0.0) // 简化版本
+        (id)kCTKernAttributeName: @([UIFont cui_cameraKerningForFont:newFont])
     };
 
     NSAttributedString *finalLabel = [[NSAttributedString alloc] initWithString:label attributes:attributedStringAttributes];
@@ -509,17 +508,12 @@ static BOOL shouldHidePauseResumeDuringVideoButton(CAMViewfinderViewController *
     UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"CameraBoost" message:message preferredStyle:UIAlertControllerStyleAlert];
     NSMutableDictionary <NSString *, NSNumber *> *modes = [NSMutableDictionary dictionary];
     
-    // 注意：以下代码需要 PSHeader 框架
-    // VideoConfigurationMode currentVideoConfigurationMode = [[NSClassFromString(@"CAMUserPreferences") preferences] videoConfiguration];
-    // CAMCaptureCapabilities *capabilities = [NSClassFromString(@"CAMCaptureCapabilities") capabilities];
-    
-    // 简化版本，避免 PSHeader 依赖
-    VideoConfigurationMode currentVideoConfigurationMode = VideoConfigurationModeDefault;
-    
+    VideoConfigurationMode currentVideoConfigurationMode = [[NSClassFromString(@"CAMUserPreferences") preferences] videoConfiguration];
+    CAMCaptureCapabilities *capabilities = [NSClassFromString(@"CAMCaptureCapabilities") capabilities];
     for (VideoConfigurationMode mode = 0; mode < VideoConfigurationModeCount; ++mode) {
         if (mode != currentVideoConfigurationMode) {
-            // 简化版本：假设所有模式都支持
-            modes[title(mode)] = @(mode);
+            if ([capabilities isSupportedVideoConfiguration:mode forMode:cameraMode device:cameraDevice])
+                modes[title(mode)] = @(mode);
         }
     }
     
