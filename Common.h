@@ -1,8 +1,12 @@
 #define UNRESTRICTED_AVAILABILITY
 #import <UIKit/UIKit.h>
 #import <AVFoundation/AVFoundation.h>
+#import <CoreFoundation/CoreFoundation.h>
+#import <CoreText/CoreText.h>
 
+// ===============================
 // 视频配置模式枚举
+// ===============================
 typedef NS_ENUM(NSInteger, VideoConfigurationMode) {
     VideoConfigurationModeDefault = 0,
     VideoConfigurationMode1080p60 = 1,
@@ -22,21 +26,29 @@ typedef NS_ENUM(NSInteger, VideoConfigurationMode) {
     VideoConfigurationModeCount
 };
 
+// ===============================
 // 全局变量
+// ===============================
 extern NSInteger devices[];
 extern NSInteger toFPS[];
 extern NSString *NSTimerPauseDate;
 extern NSString *NSTimerPreviousFireDate;
 
+// ===============================
 // 函数声明
+// ===============================
 NSString *title(VideoConfigurationMode mode);
 
+// ===============================
 // 类型声明
+// ===============================
 typedef struct {
     float r, g, b;
 } CAMShutterColor;
 
+// ===============================
 // 偏好设置键
+// ===============================
 #define kCameraBoostEnabled @"CameraBoostEnabled"
 #define kPauseResumeEnabled @"PauseResumeEnabled"
 #define kVideoConfigEnabled @"VideoConfigEnabled"
@@ -45,21 +57,18 @@ typedef struct {
 #define kModeHidingEnabled @"ModeHidingEnabled"
 #define kHiddenModes @"HiddenModes"
 
-// 私有类最小接口声明
+// ===============================
+// 私有类接口声明
+// ===============================
+
 @interface CUShutterButton : UIButton
 @property (nonatomic) UIEdgeInsets tappableEdgeInsets;
+@property (nonatomic) NSInteger mode;
+@property (nonatomic, strong) UIView *_innerView;
++ (instancetype)smallShutterButtonWithLayoutStyle:(NSInteger)layoutStyle;
++ (instancetype)smallShutterButton;
 - (CGSize)intrinsicContentSize;
 - (CGRect)frameForAlignmentRect:(CGRect)rect;
-@end
-
-@interface CAMViewfinderViewController : UIViewController
-@property (nonatomic, readonly) NSInteger _currentMode;
-@property (nonatomic, readonly) NSInteger _currentDevice;
-- (id)_currentGraphConfiguration;
-- (BOOL)_isSpatialVideoInVideoModeActiveForMode:(NSInteger)mode devicePosition:(NSInteger)position;
-- (BOOL)_shouldHideStillDuringVideoButtonForGraphConfiguration:(id)configuration;
-- (BOOL)_shouldHideStillDuringVideoButtonForMode:(NSInteger)mode device:(NSInteger)device;
-- (id)_captureController;
 @end
 
 @interface CAMCaptureGraphConfiguration : NSObject
@@ -69,27 +78,63 @@ typedef struct {
 @end
 
 @interface CUCaptureController : NSObject
+- (BOOL)isCapturingVideo;
 - (BOOL)isCapturingCTMVideo;
+- (id)_captureEngine;
 @end
 
 @interface CAMDynamicShutterControl : NSObject
 @property (nonatomic) BOOL overrideShutterButtonColor;
+@property (nonatomic, retain) CUShutterButton *pauseResumeDuringVideoButton;
+- (void)_updateRendererShapes;
 @end
 
-// 已有私有扩展
-@interface AVCaptureMovieFileOutput (Private)
-- (BOOL)isRecordingPaused;
-- (void)pauseRecording;
-- (void)resumeRecording;
+@interface CAMElapsedTimeView : UIView
+@property (nonatomic, strong) UILabel *_timeLabel;
+@property (nonatomic, strong) UIImageView *_recordingImageView;
+- (void)pauseTimer;
+- (void)resumeTimer;
+- (void)updateUI:(BOOL)pause recording:(BOOL)recording;
+@end
+
+@interface CAMViewfinderViewController : UIViewController
+@property (nonatomic, readonly) NSInteger _currentMode;
+@property (nonatomic, readonly) NSInteger _currentDevice;
+@property (nonatomic, strong) CAMElapsedTimeView *_elapsedTimeView;
+@property (nonatomic, strong) CUShutterButton *_shutterButton;
+@property (nonatomic, strong) CAMDynamicShutterControl *_dynamicShutterControl;
+
+- (CAMCaptureGraphConfiguration *)_currentGraphConfiguration;
+- (CUCaptureController *)_captureController;
+- (BOOL)_isSpatialVideoInVideoModeActiveForMode:(NSInteger)mode devicePosition:(NSInteger)position;
+- (BOOL)_shouldHideStillDuringVideoButtonForGraphConfiguration:(CAMCaptureGraphConfiguration *)configuration;
+- (BOOL)_shouldHideStillDuringVideoButtonForMode:(NSInteger)mode device:(NSInteger)device;
 @end
 
 @interface CAMLiquidShutterRenderer : NSObject
 - (void)renderIfNecessary;
 @end
 
+@interface CAMBottomBar : UIView
+@property (nonatomic, retain) CUShutterButton *pauseResumeDuringVideoButton;
+@property (nonatomic, strong) CUShutterButton *shutterButton;
+@end
+
+// ===============================
+// 私有扩展
+// ===============================
+@interface AVCaptureMovieFileOutput (Private)
+- (BOOL)isRecordingPaused;
+- (void)pauseRecording;
+- (void)resumeRecording;
+@end
+
 @interface UIView (Private)
 @property (nonatomic, assign, setter=_setShouldReverseLayoutDirection:) BOOL _shouldReverseLayoutDirection;
 @end
 
+// ===============================
+// UI 计算工具函数
+// ===============================
 extern CGRect UIRectIntegralWithScale(CGRect rect, CGFloat scale);
 extern CGFloat UIRoundToViewScale(CGFloat value, UIView *view);
