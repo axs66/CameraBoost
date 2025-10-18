@@ -24,6 +24,11 @@ jobs:
       - name: Use Theos Setup Action
         uses: axs66/theos-action@main
 
+      - name: Setup PSHeader
+        run: |
+          git clone https://github.com/PoomSmart/PSHeader.git $THEOS/include/PSHeader
+          echo "PSHeader installed to $THEOS/include/PSHeader"
+
       - name: Clean previous packages
         run: rm -f ${{ github.workspace }}/packages/*.deb
 
