@@ -85,8 +85,6 @@ CameraBoost/
 ├── build.sh                   # 构建脚本
 ├── README.md                  # 项目说明
 ├── layout/                    # 资源文件
-│   └── Library/Application Support/CameraBoost.bundle/
-│       └── Info.plist
 └── CameraBoostprefs/          # 偏好设置子项目
     ├── CameraBoostprefs.h     # 偏好设置头文件
     ├── CameraBoostprefs.m     # 偏好设置实现
@@ -120,7 +118,8 @@ CameraBoost/
 
 ### v1.0.0
 - 初始版本发布
-- 合并 RecordPause 和 TapVideoConfig 功能
+- 新增录制视频暂停/恢复
+- 新增快速更改视频录制配置
 - 新增手电筒快速切换
 - 新增毫秒级时间显示
 - 新增相机模式隐藏功能
