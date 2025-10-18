@@ -1,4 +1,4 @@
-// #import "CAMTopBar.h"
+#import "CAMTopBar.h"
 #import "CAMBottomBar.h"
 #import "CAMViewfinderView.h"
 #import "CAMZoomSlider.h"
