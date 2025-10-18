@@ -36,6 +36,17 @@ typedef struct {
     float r, g, b;
 } CAMShutterColor;
 
+// 前向声明
+@class CAMElapsedTimeView;
+@class CAMViewfinderViewController;
+@class CAMDynamicShutterControl;
+@class CAMBottomBar;
+@class CUShutterButton;
+@class CAMCaptureGraphConfiguration;
+@class CUCaptureController;
+@class CAMCaptureEngine;
+@class CAMCaptureMovieFileOutput;
+
 // 偏好设置键
 #define kCameraBoostEnabled @"CameraBoostEnabled"
 #define kPauseResumeEnabled @"PauseResumeEnabled"
@@ -45,12 +56,7 @@ typedef struct {
 #define kModeHidingEnabled @"ModeHidingEnabled"
 #define kHiddenModes @"HiddenModes"
 
-@interface CAMElapsedTimeView (Addition)
-- (void)pauseTimer;
-- (void)resumeTimer;
-- (void)updateUI:(BOOL)pause recording:(BOOL)recording;
-@end
-
+// 私有类声明和函数声明
 @interface AVCaptureMovieFileOutput (Private)
 - (BOOL)isRecordingPaused;
 - (void)pauseRecording;
@@ -67,25 +73,3 @@ typedef struct {
 
 extern CGRect UIRectIntegralWithScale(CGRect rect, CGFloat scale);
 extern CGFloat UIRoundToViewScale(CGFloat value, UIView *view);
-
-@interface CAMViewfinderViewController (Addition)
-@property (retain, nonatomic) UILongPressGestureRecognizer *rpGesture;
-@property (nonatomic, retain) CUShutterButton *_pauseResumeDuringVideoButton;
-- (void)_createPauseResumeDuringVideoButtonIfNecessary;
-- (void)_embedPauseResumeDuringVideoButtonWithLayoutStyle:(NSInteger)layoutStyle;
-- (void)_updatePauseResumeDuringVideoButton:(BOOL)paused;
-@end
-
-@interface CAMDynamicShutterControl (Addition)
-@property (nonatomic, retain) CUShutterButton *pauseResumeDuringVideoButton;
-@property (nonatomic, assign) BOOL overrideShutterButtonColor;
-@end
-
-@interface CAMBottomBar (Addition)
-@property (nonatomic, retain) CUShutterButton *pauseResumeDuringVideoButton;
-- (void)_layoutPauseResumeDuringVideoButtonForLayoutStyle:(NSInteger)layoutStyle;
-- (void)_layoutPauseResumeDuringVideoButtonForTraitCollection:(UITraitCollection *)traitCollection;
-@end
-
-NSString *NSTimerPauseDate = @"NSTimerPauseDate";
-NSString *NSTimerPreviousFireDate = @"NSTimerPreviousFireDate";
