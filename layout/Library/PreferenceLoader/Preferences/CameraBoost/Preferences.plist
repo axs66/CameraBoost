@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>items</key>
+    <array>
+        <dict>
+            <key>cell</key>
+            <string>PSGroupCell</string>
+            <key>label</key>
+            <string>Timer Settings</string>
+        </dict>
+        <dict>
+            <key>cell</key>
+            <string>PSSegmentCell</string>
+            <key>label</key>
+            <string>Sub-second Precision</string>
+            <key>key</key>
+            <string>CameraBoost_SubSecondPrecision</string>
+            <key>default</key>
+            <integer>0</integer>
+            <key>validValues</key>
+            <array>
+                <string>Default (HH:mm:ss)</string>
+                <string>1 Decimal (HH:mm:ss.S)</string>
+                <string>2 Decimals (HH:mm:ss.SS)</string>
+                <string>3 Decimals (HH:mm:ss.SSS)</string>
+            </array>
+            <key>validTitles</key>
+            <array>
+                <string>Default</string>
+                <string>1 Decimal</string>
+                <string>2 Decimals</string>
+                <string>3 Decimals</string>
+            </array>
+        </dict>
+        <dict>
+            <key>cell</key>
+            <string>PSGroupCell</string>
+            <key>label</key>
+            <string>Recording Features</string>
+        </dict>
+        <dict>
+            <key>cell</key>
+            <string>PSSwitchCell</string>
+            <key>label</key>
+            <string>Enable Pause/Resume</string>
+            <key>key</key>
+            <string>CameraBoost_EnablePauseResume</string>
+            <key>default</key>
+            <true/>
+        </dict>
+        <dict>
+            <key>cell</key>
+            <string>PSSwitchCell</string>
+            <key>label</key>
+            <string>Enable Torch Control</string>
+            <key>key</key>
+            <string>CameraBoost_EnableTorch</string>
+            <key>default</key>
+            <true/>
+        </dict>
+        <dict>
+            <key>cell</key>
+            <string>PSSwitchCell</string>
+            <key>label</key>
+            <string>Enable Video Configuration</string>
+            <key>key</key>
+            <string>CameraBoost_EnableVideoConfig</string>
+            <key>default</key>
+            <true/>
+        </dict>
+        <dict>
+            <key>cell</key>
+            <string>PSGroupCell</string>
+            <key>label</key>
+            <string>About</string>
+        </dict>
+        <dict>
+            <key>cell</key>
+            <string>PSStaticTextCell</string>
+            <key>label</key>
+            <string>CameraBoost v1.0.0</string>
+        </dict>
+        <dict>
+            <key>cell</key>
+            <string>PSStaticTextCell</string>
+            <key>label</key>
+            <string>Enhanced camera features for iOS 15+</string>
+        </dict>
+    </array>
+    <key>title</key>
+    <string>CameraBoost</string>
+</dict>
+</plist>
