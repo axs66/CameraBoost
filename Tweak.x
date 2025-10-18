@@ -105,7 +105,15 @@ NSString *title(VideoConfigurationMode mode) {
     NSInteger currentMode = device.torchMode;
     NSInteger newMode = (currentMode == AVCaptureTorchModeOn) ? AVCaptureTorchModeOff : AVCaptureTorchModeOn;
     
-    if ([device setTorchMode:newMode error:&error]) {
+    // 使用正确的手电筒控制方法
+    BOOL success = NO;
+    if (newMode == AVCaptureTorchModeOn) {
+        success = [device setTorchModeOnWithLevel:1.0 error:&error];
+    } else {
+        success = [device setTorchMode:AVCaptureTorchModeOff error:&error];
+    }
+    
+    if (success) {
         [button setTitle:(newMode == AVCaptureTorchModeOn) ? @"🔦" : @"💡" forState:UIControlStateNormal];
     }
 }
