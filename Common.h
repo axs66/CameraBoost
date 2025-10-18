@@ -1,7 +1,15 @@
 #define UNRESTRICTED_AVAILABILITY
 #import <UIKit/UIKit.h>
 #import <AVFoundation/AVFoundation.h>
-#import <CameraUI/CameraUI.h>
+
+// 前向声明
+@class CAMElapsedTimeView;
+@class CAMViewfinderViewController;
+@class CAMDynamicShutterControl;
+@class CAMBottomBar;
+@class CAMModeDial;
+@class CUShutterButton;
+@class CAMCaptureGraphConfiguration;
 
 // 视频配置模式枚举
 typedef NS_ENUM(NSInteger, VideoConfigurationMode) {
