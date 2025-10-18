@@ -1,0 +1,17 @@
+#import "Common.h"
+#import <PSHeader/CameraApp/CAMViewfinderViewController.h>
+#import <PSHeader/CameraApp/CAMElapsedTimeView.h>
+#import <PSHeader/CameraApp/CAMCaptureCapabilities.h>
+#import <PSHeader/CameraApp/CAMUserPreferences.h>
+#import <PSHeader/CameraApp/CAMControlStatusIndicator.h>
+#import <PSHeader/CameraApp/CAMFramerateIndicatorView.h>
+#import <PSHeader/CameraApp/CAMBottomBar.h>
+#import <PSHeader/CameraApp/CAMDynamicShutterControl.h>
+#import <PSHeader/CameraApp/CAMShutterButton.h>
+#import <PSHeader/CameraApp/CUCaptureController.h>
+#import <PSHeader/CameraApp/CAMCaptureEngine.h>
+#import <PSHeader/CameraApp/CAMCaptureMovieFileOutput.h>
+#import <PSHeader/CameraMacros.h>
+#import <PSHeader/Misc.h>
+#import <UIKit/UIKit.h>
+#import <Foundation/Foundation.h>
