@@ -2,14 +2,7 @@
 #import <UIKit/UIKit.h>
 #import <AVFoundation/AVFoundation.h>
 
-// 前向声明
-@class CAMElapsedTimeView;
-@class CAMViewfinderViewController;
-@class CAMDynamicShutterControl;
-@class CAMBottomBar;
-@class CAMModeDial;
-@class CUShutterButton;
-@class CAMCaptureGraphConfiguration;
+// 私有类声明 - 这些类在运行时通过 CameraUI 框架动态链接
 
 // 视频配置模式枚举
 typedef NS_ENUM(NSInteger, VideoConfigurationMode) {
