@@ -1,5 +1,7 @@
 #define UNRESTRICTED_AVAILABILITY
+#import <UIKit/UIKit.h>
 #import <AVFoundation/AVFoundation.h>
+#import <CameraUI/CameraUI.h>
 
 // 视频配置模式枚举
 typedef NS_ENUM(NSInteger, VideoConfigurationMode) {
@@ -96,4 +98,3 @@ extern CGFloat UIRoundToViewScale(CGFloat value, UIView *view);
 @property (nonatomic, retain) NSMutableSet *hiddenModes;
 - (void)updateModeVisibility;
 @end
-
