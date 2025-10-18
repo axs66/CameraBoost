@@ -1,6 +1,4 @@
 #define UNRESTRICTED_AVAILABILITY
-#import <PSHeader/CameraApp/CameraApp.h>
-#import <PSHeader/CameraMacros.h>
 #import <AVFoundation/AVFoundation.h>
 
 // 视频配置模式枚举
@@ -98,3 +96,4 @@ extern CGFloat UIRoundToViewScale(CGFloat value, UIView *view);
 @property (nonatomic, retain) NSMutableSet *hiddenModes;
 - (void)updateModeVisibility;
 @end
+
