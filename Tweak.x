@@ -73,15 +73,63 @@ NSString *title(VideoConfigurationMode mode) {
 #define AVCaptureTorchModeOn 1
 #define AVCaptureTorchModeAuto 2
 
+// 接口扩展
+@interface CAMElapsedTimeView (Addition)
+- (void)pauseTimer;
+- (void)resumeTimer;
+- (void)updateUI:(BOOL)pause recording:(BOOL)recording;
+@end
+
+@interface AVCaptureMovieFileOutput (Private)
+- (BOOL)isRecordingPaused;
+- (void)pauseRecording;
+- (void)resumeRecording;
+@end
+
+@interface CAMLiquidShutterRenderer : NSObject
+- (void)renderIfNecessary;
+@end
+
+@interface UIView (Private)
+@property (nonatomic, assign, setter=_setShouldReverseLayoutDirection:) BOOL _shouldReverseLayoutDirection;
+@end
+
+extern CGRect UIRectIntegralWithScale(CGRect rect, CGFloat scale);
+extern CGFloat UIRoundToViewScale(CGFloat value, UIView *view);
+
+@interface CAMViewfinderViewController (Addition)
+@property (retain, nonatomic) UILongPressGestureRecognizer *rpGesture;
+@property (nonatomic, retain) CUShutterButton *_pauseResumeDuringVideoButton;
+- (void)_createPauseResumeDuringVideoButtonIfNecessary;
+- (void)_embedPauseResumeDuringVideoButtonWithLayoutStyle:(NSInteger)layoutStyle;
+- (void)_updatePauseResumeDuringVideoButton:(BOOL)paused;
+@end
+
+@interface CAMDynamicShutterControl (Addition)
+@property (nonatomic, retain) CUShutterButton *pauseResumeDuringVideoButton;
+@property (nonatomic, assign) BOOL overrideShutterButtonColor;
+@end
+
+@interface CAMBottomBar (Addition)
+@property (nonatomic, retain) CUShutterButton *pauseResumeDuringVideoButton;
+- (void)_layoutPauseResumeDuringVideoButtonForLayoutStyle:(NSInteger)layoutStyle;
+- (void)_layoutPauseResumeDuringVideoButtonForTraitCollection:(UITraitCollection *)traitCollection;
+@end
+
 // 毫秒显示相关
 @interface CAMElapsedTimeView (MillisecondDisplay)
 @property (nonatomic, retain) UILabel *millisecondLabel;
 @property (nonatomic, retain) NSTimer *millisecondTimer;
+- (void)startMillisecondTimer;
+- (void)stopMillisecondTimer;
+- (void)updateMillisecondDisplay;
+- (void)createMillisecondLabel;
 @end
 
 // 模式隐藏相关
 @interface CAMModeDial (ModeHiding)
 @property (nonatomic, retain) NSMutableSet *hiddenModes;
+- (void)updateModeVisibility;
 @end
 
 // 手电筒按钮
