@@ -1,0 +1,22 @@
+#!/bin/bash
+
+# CameraBoost post-installation script
+
+echo "CameraBoost: Setting up preferences..."
+
+# Create preferences directory if it doesn't exist
+mkdir -p /var/mobile/Library/Preferences
+
+# Set default preferences
+defaults write com.cameraboost.cameraboost CameraBoost_SubSecondPrecision -int 0
+defaults write com.cameraboost.cameraboost CameraBoost_EnablePauseResume -bool true
+defaults write com.cameraboost.cameraboost CameraBoost_EnableTorch -bool true
+defaults write com.cameraboost.cameraboost CameraBoost_EnableVideoConfig -bool true
+
+# Set proper permissions
+chown -R mobile:mobile /var/mobile/Library/Preferences/com.cameraboost.cameraboost.plist 2>/dev/null || true
+
+echo "CameraBoost: Installation complete!"
+echo "Please respring your device to activate CameraBoost."
+
+exit 0
