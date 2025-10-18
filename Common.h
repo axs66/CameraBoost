@@ -36,17 +36,6 @@ typedef struct {
     float r, g, b;
 } CAMShutterColor;
 
-// 前向声明
-@class CAMElapsedTimeView;
-@class CAMViewfinderViewController;
-@class CAMDynamicShutterControl;
-@class CAMBottomBar;
-@class CUShutterButton;
-@class CAMCaptureGraphConfiguration;
-@class CUCaptureController;
-@class CAMCaptureEngine;
-@class CAMCaptureMovieFileOutput;
-
 // 偏好设置键
 #define kCameraBoostEnabled @"CameraBoostEnabled"
 #define kPauseResumeEnabled @"PauseResumeEnabled"
@@ -56,7 +45,38 @@ typedef struct {
 #define kModeHidingEnabled @"ModeHidingEnabled"
 #define kHiddenModes @"HiddenModes"
 
-// 私有类声明和函数声明
+// 私有类最小接口声明
+@interface CUShutterButton : UIButton
+@property (nonatomic) UIEdgeInsets tappableEdgeInsets;
+- (CGSize)intrinsicContentSize;
+- (CGRect)frameForAlignmentRect:(CGRect)rect;
+@end
+
+@interface CAMViewfinderViewController : UIViewController
+@property (nonatomic, readonly) NSInteger _currentMode;
+@property (nonatomic, readonly) NSInteger _currentDevice;
+- (id)_currentGraphConfiguration;
+- (BOOL)_isSpatialVideoInVideoModeActiveForMode:(NSInteger)mode devicePosition:(NSInteger)position;
+- (BOOL)_shouldHideStillDuringVideoButtonForGraphConfiguration:(id)configuration;
+- (BOOL)_shouldHideStillDuringVideoButtonForMode:(NSInteger)mode device:(NSInteger)device;
+- (id)_captureController;
+@end
+
+@interface CAMCaptureGraphConfiguration : NSObject
+@property (nonatomic) NSInteger mode;
+@property (nonatomic) NSInteger devicePosition;
+@property (nonatomic) NSInteger videoEncodingBehavior;
+@end
+
+@interface CUCaptureController : NSObject
+- (BOOL)isCapturingCTMVideo;
+@end
+
+@interface CAMDynamicShutterControl : NSObject
+@property (nonatomic) BOOL overrideShutterButtonColor;
+@end
+
+// 已有私有扩展
 @interface AVCaptureMovieFileOutput (Private)
 - (BOOL)isRecordingPaused;
 - (void)pauseRecording;
