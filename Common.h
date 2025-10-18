@@ -1,121 +1,39 @@
-#define UNRESTRICTED_AVAILABILITY
-#import <UIKit/UIKit.h>
-#import <AVFoundation/AVFoundation.h>
+#import <Foundation/Foundation.h>
+#import <objc/runtime.h>
 
-// ======================
-// 视频配置模式
-// ======================
+// Timer pause/resume constants
+static const void *NSTimerPauseDate = &NSTimerPauseDate;
+static const void *NSTimerPreviousFireDate = &NSTimerPreviousFireDate;
+
+// Camera mode and device constants
+#define CAMERA_MODE_VIDEO 1
+#define CAMERA_MODE_SLOMO 2
+#define CAMERA_DEVICE_BACK 0
+#define CAMERA_DEVICE_FRONT 1
+
+// Video configuration modes
 typedef NS_ENUM(NSInteger, VideoConfigurationMode) {
     VideoConfigurationModeDefault = 0,
-    VideoConfigurationMode1080p60,
-    VideoConfigurationMode720p120,
-    VideoConfigurationMode720p240,
-    VideoConfigurationMode1080p120,
-    VideoConfigurationMode4k30,
-    VideoConfigurationMode720p30,
-    VideoConfigurationMode1080p30,
-    VideoConfigurationMode1080p240,
-    VideoConfigurationMode4k60,
-    VideoConfigurationMode4k24,
-    VideoConfigurationMode1080p25,
-    VideoConfigurationMode4k25,
-    VideoConfigurationMode4k120,
-    VideoConfigurationMode4k100,
+    VideoConfigurationMode1080p60 = 1,
+    VideoConfigurationMode720p120 = 2,
+    VideoConfigurationMode720p240 = 3,
+    VideoConfigurationMode1080p120 = 4,
+    VideoConfigurationMode4k30 = 5,
+    VideoConfigurationMode720p30 = 6,
+    VideoConfigurationMode1080p30 = 7,
+    VideoConfigurationMode1080p240 = 8,
+    VideoConfigurationMode4k60 = 9,
+    VideoConfigurationMode4k24 = 10,
+    VideoConfigurationMode1080p25 = 11,
+    VideoConfigurationMode4k25 = 12,
+    VideoConfigurationMode4k120 = 13,
+    VideoConfigurationMode4k100 = 14,
     VideoConfigurationModeCount
 };
 
-// ======================
-// 全局变量
-// ======================
-extern NSInteger devices[];
-extern NSInteger toFPS[];
-extern NSString *NSTimerPauseDate;
-extern NSString *NSTimerPreviousFireDate;
-
-// ======================
-// 函数声明
-// ======================
+// Utility functions
+BOOL checkModeAndDevice(NSInteger mode, NSInteger device);
+BOOL isBackCamera(NSInteger device);
 NSString *title(VideoConfigurationMode mode);
-
-// ======================
-// 类型
-// ======================
-typedef struct { float r,g,b; } CAMShutterColor;
-
-// ======================
-// 前向声明
-// ======================
-@class CAMElapsedTimeView;
-@class CAMViewfinderViewController;
-@class CAMDynamicShutterControl;
-@class CAMBottomBar;
-@class CUShutterButton;
-@class CAMCaptureGraphConfiguration;
-@class CUCaptureController;
-@class CAMCaptureEngine;
-@class CAMCaptureMovieFileOutput;
-@class CAMFramerateIndicatorView;
-@class CAMCaptureCapabilities;
-@class CAMUserPreferences;
-
-// ======================
-// 偏好设置键
-// ======================
-#define kCameraBoostEnabled @"CameraBoostEnabled"
-#define kPauseResumeEnabled @"PauseResumeEnabled"
-#define kVideoConfigEnabled @"VideoConfigEnabled"
-#define kFlashlightToggleEnabled @"FlashlightToggleEnabled"
-#define kMillisecondDisplayEnabled @"MillisecondDisplayEnabled"
-#define kModeHidingEnabled @"ModeHidingEnabled"
-#define kHiddenModes @"HiddenModes"
-
-// ======================
-// 私有类扩展
-// ======================
-@interface AVCaptureMovieFileOutput (Private)
-- (BOOL)isRecordingPaused;
-- (void)pauseRecording;
-- (void)resumeRecording;
-@end
-
-@interface CAMLiquidShutterRenderer : NSObject
-- (void)renderIfNecessary;
-@end
-
-@interface UIView (Private)
-@property (nonatomic, assign, setter=_setShouldReverseLayoutDirection:) BOOL _shouldReverseLayoutDirection;
-@end
-
-extern CGRect UIRectIntegralWithScale(CGRect rect, CGFloat scale);
-extern CGFloat UIRoundToViewScale(CGFloat value, UIView *view);
-
-// ======================
-// CAMViewfinderViewController 扩展
-// ======================
-@interface CAMViewfinderViewController : UIViewController
-@property (nonatomic, retain) UIButton *flashlightToggleButton;
-@property (nonatomic, retain) CUShutterButton *_pauseResumeDuringVideoButton;
-@property (nonatomic, strong) id _currentGraphConfiguration;
-@property (nonatomic, strong) CAMElapsedTimeView *_elapsedTimeView;
-@property (nonatomic, strong) CUShutterButton *_shutterButton;
-
-- (void)_writeUserPreferences;
-- (void)readUserPreferencesAndHandleChangesWithOverrides:(NSInteger)overrides;
-@end
-
-@interface CAMCaptureCapabilities : NSObject
-+ (instancetype)capabilities;
-- (BOOL)isSupportedVideoConfiguration:(VideoConfigurationMode)mode forMode:(NSInteger)cameraMode device:(NSInteger)device;
-@end
-
-@interface CAMUserPreferences : NSObject
-+ (instancetype)preferences;
-- (VideoConfigurationMode)videoConfiguration;
-@end
-
-@interface CAMElapsedTimeView : UIView
-@property (nonatomic, strong) UILabel *_timeLabel;
-@property (nonatomic, strong) NSDate *__startTime;
-@property (nonatomic, strong) NSTimer *__updateTimer;
-- (void)updateUI:(BOOL)pause recording:(BOOL)recording;
-@end
+NSInteger getVideoConfigurationResolution(VideoConfigurationMode mode);
+NSInteger getVideoConfigurationFramerate(VideoConfigurationMode mode);
