@@ -1,4 +1,33 @@
-.theos
+# Theos build files
+obj/
+packages/
+.deb
+*.deb
+
+# Xcode files
+*.xcodeproj/
+*.xcworkspace/
+DerivedData/
+
+# macOS files
 .DS_Store
-packages
-obj
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Temporary files
+*.tmp
+*.temp
+*~
+
+# Log files
+*.log
