@@ -73,13 +73,7 @@ NSString *title(VideoConfigurationMode mode) {
 #define AVCaptureTorchModeOn 1
 #define AVCaptureTorchModeAuto 2
 
-// 接口扩展
-@interface CAMElapsedTimeView (Addition)
-- (void)pauseTimer;
-- (void)resumeTimer;
-- (void)updateUI:(BOOL)pause recording:(BOOL)recording;
-@end
-
+// 私有类声明和函数声明
 @interface AVCaptureMovieFileOutput (Private)
 - (BOOL)isRecordingPaused;
 - (void)pauseRecording;
@@ -96,49 +90,6 @@ NSString *title(VideoConfigurationMode mode) {
 
 extern CGRect UIRectIntegralWithScale(CGRect rect, CGFloat scale);
 extern CGFloat UIRoundToViewScale(CGFloat value, UIView *view);
-
-@interface CAMViewfinderViewController (Addition)
-@property (retain, nonatomic) UILongPressGestureRecognizer *rpGesture;
-@property (nonatomic, retain) CUShutterButton *_pauseResumeDuringVideoButton;
-- (void)_createPauseResumeDuringVideoButtonIfNecessary;
-- (void)_embedPauseResumeDuringVideoButtonWithLayoutStyle:(NSInteger)layoutStyle;
-- (void)_updatePauseResumeDuringVideoButton:(BOOL)paused;
-@end
-
-@interface CAMDynamicShutterControl (Addition)
-@property (nonatomic, retain) CUShutterButton *pauseResumeDuringVideoButton;
-@property (nonatomic, assign) BOOL overrideShutterButtonColor;
-@end
-
-@interface CAMBottomBar (Addition)
-@property (nonatomic, retain) CUShutterButton *pauseResumeDuringVideoButton;
-- (void)_layoutPauseResumeDuringVideoButtonForLayoutStyle:(NSInteger)layoutStyle;
-- (void)_layoutPauseResumeDuringVideoButtonForTraitCollection:(UITraitCollection *)traitCollection;
-@end
-
-// 毫秒显示相关
-@interface CAMElapsedTimeView (MillisecondDisplay)
-@property (nonatomic, retain) UILabel *millisecondLabel;
-@property (nonatomic, retain) NSTimer *millisecondTimer;
-- (void)startMillisecondTimer;
-- (void)stopMillisecondTimer;
-- (void)updateMillisecondDisplay;
-- (void)createMillisecondLabel;
-@end
-
-// 模式隐藏相关
-@interface CAMModeDial (ModeHiding)
-@property (nonatomic, retain) NSMutableSet *hiddenModes;
-- (void)updateModeVisibility;
-@end
-
-// 手电筒按钮
-@interface CAMViewfinderViewController (FlashlightButton)
-@property (nonatomic, retain) UIButton *flashlightButton;
-- (void)createFlashlightButtonIfNecessary;
-- (void)updateFlashlightButtonVisibility;
-- (void)handleFlashlightButtonPressed:(UIButton *)button;
-@end
 
 // 毫秒显示实现
 %hook CAMElapsedTimeView
