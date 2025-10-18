@@ -59,59 +59,29 @@ NSString *title(VideoConfigurationMode mode) {
 #define kModeHidingEnabled @"ModeHidingEnabled"
 #define kHiddenModes @"HiddenModes"
 
-// 手电筒控制
-@interface AVCaptureDevice (CameraBoost)
-+ (AVCaptureDevice *)defaultDeviceWithMediaType:(NSString *)mediaType;
-- (BOOL)hasTorch;
-- (BOOL)isTorchAvailable;
-- (BOOL)setTorchMode:(NSInteger)torchMode error:(NSError **)outError;
-- (NSInteger)torchMode;
-@end
-
 // 手电筒模式常量
 #define AVCaptureTorchModeOff 0
 #define AVCaptureTorchModeOn 1
 #define AVCaptureTorchModeAuto 2
 
-// 私有类声明和函数声明
-@interface AVCaptureMovieFileOutput (Private)
-- (BOOL)isRecordingPaused;
-- (void)pauseRecording;
-- (void)resumeRecording;
-@end
+// 简化的功能实现 - 只使用基本的 Objective-C 运行时功能
+%hook UIViewController
 
-@interface CAMLiquidShutterRenderer : NSObject
-- (void)renderIfNecessary;
-@end
-
-@interface UIView (Private)
-@property (nonatomic, assign, setter=_setShouldReverseLayoutDirection:) BOOL _shouldReverseLayoutDirection;
-@end
-
-extern CGRect UIRectIntegralWithScale(CGRect rect, CGFloat scale);
-extern CGFloat UIRoundToViewScale(CGFloat value, UIView *view);
-
-// 类型声明
-typedef struct {
-    float r, g, b;
-} CAMShutterColor;
-
-// 简化的功能实现 - 只保留基本功能，避免复杂的属性声明
-%hook CAMViewfinderViewController
-
-- (void)_createVideoControlsIfNecessary {
+- (void)viewDidLoad {
     %orig;
-    // 基本的手电筒按钮功能
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:kFlashlightToggleEnabled]) {
-        [self createFlashlightButtonIfNecessary];
+    
+    // 检查是否是相机视图控制器
+    if ([NSStringFromClass([self class]) containsString:@"CAMViewfinderViewController"]) {
+        if ([[NSUserDefaults standardUserDefaults] boolForKey:kFlashlightToggleEnabled]) {
+            [self performSelector:@selector(createFlashlightButtonIfNecessary) withObject:nil afterDelay:1.0];
+        }
     }
 }
 
 %new(v@:)
 - (void)createFlashlightButtonIfNecessary {
-    // 简化的手电筒按钮实现
     UIButton *flashlightButton = objc_getAssociatedObject(self, @selector(flashlightButton));
-    if (flashlightButton || ![[NSUserDefaults standardUserDefaults] boolForKey:kFlashlightToggleEnabled]) return;
+    if (flashlightButton) return;
     
     flashlightButton = [UIButton buttonWithType:UIButtonTypeSystem];
     [flashlightButton setTitle:@"🔦" forState:UIControlStateNormal];
@@ -138,14 +108,6 @@ typedef struct {
     if ([device setTorchMode:newMode error:&error]) {
         [button setTitle:(newMode == AVCaptureTorchModeOn) ? @"🔦" : @"💡" forState:UIControlStateNormal];
     }
-}
-
-%end
-
-%hook CAMCaptureCapabilities
-
-- (bool)interactiveVideoFormatControlAlwaysEnabled {
-    return [[NSUserDefaults standardUserDefaults] boolForKey:kVideoConfigEnabled];
 }
 
 %end
