@@ -1,0 +1,100 @@
+#define UNRESTRICTED_AVAILABILITY
+#import <PSHeader/CameraApp/CameraApp.h>
+#import <PSHeader/CameraMacros.h>
+#import <AVFoundation/AVFoundation.h>
+
+// 视频配置模式枚举
+typedef NS_ENUM(NSInteger, VideoConfigurationMode) {
+    VideoConfigurationModeDefault = 0,
+    VideoConfigurationMode1080p60 = 1,
+    VideoConfigurationMode720p120 = 2,
+    VideoConfigurationMode720p240 = 3,
+    VideoConfigurationMode1080p120 = 4,
+    VideoConfigurationMode4k30 = 5,
+    VideoConfigurationMode720p30 = 6,
+    VideoConfigurationMode1080p30 = 7,
+    VideoConfigurationMode1080p240 = 8,
+    VideoConfigurationMode4k60 = 9,
+    VideoConfigurationMode4k24 = 10,
+    VideoConfigurationMode1080p25 = 11,
+    VideoConfigurationMode4k25 = 12,
+    VideoConfigurationMode4k120 = 13,
+    VideoConfigurationMode4k100 = 14,
+    VideoConfigurationModeCount
+};
+
+// 全局变量
+extern NSInteger devices[];
+extern NSInteger toFPS[];
+extern NSString *NSTimerPauseDate;
+extern NSString *NSTimerPreviousFireDate;
+
+// 函数声明
+NSString *title(VideoConfigurationMode mode);
+
+// 接口扩展
+@interface CAMElapsedTimeView (Addition)
+- (void)pauseTimer;
+- (void)resumeTimer;
+- (void)updateUI:(BOOL)pause recording:(BOOL)recording;
+@end
+
+@interface AVCaptureMovieFileOutput (Private)
+- (BOOL)isRecordingPaused;
+- (void)pauseRecording;
+- (void)resumeRecording;
+@end
+
+@interface CAMLiquidShutterRenderer : NSObject
+- (void)renderIfNecessary;
+@end
+
+@interface UIView (Private)
+@property (nonatomic, assign, setter=_setShouldReverseLayoutDirection:) BOOL _shouldReverseLayoutDirection;
+@end
+
+extern CGRect UIRectIntegralWithScale(CGRect rect, CGFloat scale);
+extern CGFloat UIRoundToViewScale(CGFloat value, UIView *view);
+
+@interface CAMViewfinderViewController (Addition)
+@property (retain, nonatomic) UILongPressGestureRecognizer *rpGesture;
+@property (nonatomic, retain) CUShutterButton *_pauseResumeDuringVideoButton;
+- (void)_createPauseResumeDuringVideoButtonIfNecessary;
+- (void)_embedPauseResumeDuringVideoButtonWithLayoutStyle:(NSInteger)layoutStyle;
+- (void)_updatePauseResumeDuringVideoButton:(BOOL)paused;
+@end
+
+@interface CAMDynamicShutterControl (Addition)
+@property (nonatomic, retain) CUShutterButton *pauseResumeDuringVideoButton;
+@property (nonatomic, assign) BOOL overrideShutterButtonColor;
+@end
+
+@interface CAMBottomBar (Addition)
+@property (nonatomic, retain) CUShutterButton *pauseResumeDuringVideoButton;
+- (void)_layoutPauseResumeDuringVideoButtonForLayoutStyle:(NSInteger)layoutStyle;
+- (void)_layoutPauseResumeDuringVideoButtonForTraitCollection:(UITraitCollection *)traitCollection;
+@end
+
+// 毫秒显示相关
+@interface CAMElapsedTimeView (MillisecondDisplay)
+@property (nonatomic, retain) UILabel *millisecondLabel;
+@property (nonatomic, retain) NSTimer *millisecondTimer;
+- (void)startMillisecondTimer;
+- (void)stopMillisecondTimer;
+- (void)updateMillisecondDisplay;
+- (void)createMillisecondLabel;
+@end
+
+// 手电筒按钮相关
+@interface CAMViewfinderViewController (FlashlightButton)
+@property (nonatomic, retain) UIButton *flashlightButton;
+- (void)createFlashlightButtonIfNecessary;
+- (void)updateFlashlightButtonVisibility;
+- (void)handleFlashlightButtonPressed:(UIButton *)button;
+@end
+
+// 模式隐藏相关
+@interface CAMModeDial (ModeHiding)
+@property (nonatomic, retain) NSMutableSet *hiddenModes;
+- (void)updateModeVisibility;
+@end
