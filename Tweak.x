@@ -11,8 +11,7 @@
 // 全局变量定义
 NSInteger devices[] = { 1, 0, 0, 0, 1, 1 };
 NSInteger toFPS[] = { 24, 30, 60, 120, 240 };
-NSString *NSTimerPauseDate = @"NSTimerPauseDate";
-NSString *NSTimerPreviousFireDate = @"NSTimerPreviousFireDate";
+// NSTimerPauseDate 和 NSTimerPreviousFireDate 已在 Common.h 中声明
 
 // 函数实现
 NSString *title(VideoConfigurationMode mode) {
