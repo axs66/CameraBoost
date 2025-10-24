@@ -51,9 +51,9 @@ NSString *title(VideoConfigurationMode mode) {
 
 - (void)_updateText {
     NSDate *startDate = [self valueForKey:@"__startTime"];
-    NSDate *currentDate = [NSDate date"];
-    NSTimeInterval interval = [currentDate timeIntervalSinceDate:startDate];
-    NSDate *timerDate = [NSDate dateWithTimeIntervalSince1970:interval];
+    NSDate *currentDate = [NSDate date];
+    NSTimeInterval interval = [currentDate timeIntervalSinceDate:startDate];    
+    NSDate *timerDate = [NSDate date];
     NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
     NSString *format;
 
@@ -422,6 +422,9 @@ NSString *title(VideoConfigurationMode mode) {
             }
         }
         id renderer = [shutterControl valueForKey:@"_liquidShutterRenderer"];
+        if (renderer && [renderer respondsToSelector:@selector(update)]) {
+            [renderer performSelector:@selector(update)];
+    }
         // renderer may be unused on some iOS versions; intentionally not calling renderIfNecessary for compatibility
         [shutterControl setValue:@(NO) forKey:@"overrideShutterButtonColor"];
     }
@@ -707,3 +710,4 @@ static BOOL shouldHidePauseResumeDuringVideoButton(CAMViewfinderViewController *
     openCamera10();
     %init;
 }
+
