@@ -1,4 +1,5 @@
 #import "Header.h"
+#import <CoreText/CoreText.h>
 
 // Global variables for configuration
 int subSecondPrecision = 0; // 0=default, 1=1 decimal, 2=2 decimals, 3=3 decimals
@@ -11,6 +12,7 @@ NSInteger toFPS[] = { 24, 30, 60, 120, 240 };
 
 // Forward declarations
 static BOOL shouldHidePauseResumeDuringVideoButton(CAMViewfinderViewController *self);
+static void layoutPauseResumeDuringVideoButton(UIView *view, CUShutterButton *button, UIView *shutterButton, CGFloat displayScale, BOOL fixedPosition);
 
 // Utility functions
 BOOL checkModeAndDevice(NSInteger mode, NSInteger device) {
@@ -395,8 +397,7 @@ NSString *title(VideoConfigurationMode mode) {
             [shutterControl setValue:@(YES) forKey:@"overrideShutterButtonColor"];
         [shutterControl _updateRendererShapes];
         id renderer = [shutterControl valueForKey:@"_liquidShutterRenderer"];
-        if ([renderer respondsToSelector:@selector(renderIfNecessary)])
-            [renderer renderIfNecessary];
+        // Skip renderIfNecessary call as it's not available in iOS 14.5-16.6.1
         else if ([shutterControl respondsToSelector:@selector(_updateRendererShapes)])
             [shutterControl _updateRendererShapes];
         [shutterControl setValue:@(NO) forKey:@"overrideShutterButtonColor"];
@@ -478,33 +479,37 @@ NSString *title(VideoConfigurationMode mode) {
 %new(v@:l)
 - (void)_layoutPauseResumeDuringVideoButtonForLayoutStyle:(NSInteger)layoutStyle {
     if (![[self class] wantsVerticalBarForLayoutStyle:layoutStyle])
-        layoutPauseResumeDuringVideoButton(self, self.pauseResumeDuringVideoButton, self.shutterButton, self.traitCollection.displayScale, NO);
+        layoutPauseResumeDuringVideoButton(self, [self valueForKey:@"pauseResumeDuringVideoButton"], self.shutterButton, self.traitCollection.displayScale, NO);
     else {
         CGRect frame = self.frame;
         CGFloat maxY = CGRectGetMaxY(frame) - (2 * (BUTTON_SIZE + 16.0));
         CGFloat midX = CGRectGetWidth(frame) / 2 - (BUTTON_SIZE / 2);
-        self.pauseResumeDuringVideoButton.frame = CGRectMake(midX, maxY, BUTTON_SIZE, BUTTON_SIZE);
+        [[self valueForKey:@"pauseResumeDuringVideoButton"] setFrame:CGRectMake(midX, maxY, BUTTON_SIZE, BUTTON_SIZE)];
     }
 }
 
 %new(v@:@)
 - (void)_layoutPauseResumeDuringVideoButtonForTraitCollection:(UITraitCollection *)traitCollection {
     if (![[self class] wantsVerticalBarForTraitCollection:traitCollection])
-        layoutPauseResumeDuringVideoButton(self, self.pauseResumeDuringVideoButton, self.shutterButton, traitCollection.displayScale, NO);
+        layoutPauseResumeDuringVideoButton(self, [self valueForKey:@"pauseResumeDuringVideoButton"], self.shutterButton, traitCollection.displayScale, NO);
     else {
         CGRect frame = self.frame;
         CGFloat maxY = CGRectGetMaxY(frame) - (2 * (BUTTON_SIZE + 16.0));
         CGFloat midX = CGRectGetWidth(frame) / 2 - (BUTTON_SIZE / 2);
-        self.pauseResumeDuringVideoButton.frame = CGRectMake(midX, maxY, BUTTON_SIZE, BUTTON_SIZE);
+        [[self valueForKey:@"pauseResumeDuringVideoButton"] setFrame:CGRectMake(midX, maxY, BUTTON_SIZE, BUTTON_SIZE)];
     }
 }
 
 - (void)layoutSubviews {
     %orig;
     if ([self respondsToSelector:@selector(layoutStyle)])
-        [self _layoutPauseResumeDuringVideoButtonForLayoutStyle:[self layoutStyle]];
+        if ([self respondsToSelector:@selector(_layoutPauseResumeDuringVideoButtonForLayoutStyle:)]) {
+            [self performSelector:@selector(_layoutPauseResumeDuringVideoButtonForLayoutStyle:) withObject:@([self layoutStyle])];
+        }
     else
-        [self _layoutPauseResumeDuringVideoButtonForTraitCollection:self.traitCollection];
+        if ([self respondsToSelector:@selector(_layoutPauseResumeDuringVideoButtonForTraitCollection:)]) {
+            [self performSelector:@selector(_layoutPauseResumeDuringVideoButtonForTraitCollection:) withObject:self.traitCollection];
+        }
 }
 
 %end
@@ -519,7 +524,7 @@ NSString *title(VideoConfigurationMode mode) {
 
 - (CAMShutterColor)_innerShapeColor {
     CAMShutterColor color = %orig;
-    if (self.overrideShutterButtonColor) {
+    if ([[self valueForKey:@"overrideShutterButtonColor"] boolValue]) {
         CGFloat r, g, b;
         [UIColor.systemYellowColor getRed:&r green:&g blue:&b alpha:nil];
         color.r = r;
@@ -531,7 +536,7 @@ NSString *title(VideoConfigurationMode mode) {
 
 - (void)layoutSubviews {
     %orig;
-    layoutPauseResumeDuringVideoButton(self, self.pauseResumeDuringVideoButton, [self _centerOuterView], self.traitCollection.displayScale, YES);
+    layoutPauseResumeDuringVideoButton(self, [self valueForKey:@"pauseResumeDuringVideoButton"], [self _centerOuterView], self.traitCollection.displayScale, YES);
 }
 
 %end
@@ -559,7 +564,7 @@ NSString *title(VideoConfigurationMode mode) {
     }
 
     NSString *resolutionLabelFormat;
-    switch (self.resolution) {
+    switch ([[self valueForKey:@"resolution"] integerValue]) {
         case 1: resolutionLabelFormat = @"FRAMERATE_INDICATOR_720p30"; break;
         case 2: resolutionLabelFormat = @"FRAMERATE_INDICATOR_HD"; break;
         case 3: resolutionLabelFormat = @"FRAMERATE_INDICATOR_4K"; break;
@@ -568,7 +573,7 @@ NSString *title(VideoConfigurationMode mode) {
 
     NSNumberFormatter *formatter = [%c(CAMControlStatusIndicator) integerFormatter];
     NSString *resolutionLabel = resolutionLabelFormat;
-    NSString *framerateLabel = [formatter stringFromNumber:@(toFPS[self.framerate - 1])];
+    NSString *framerateLabel = [formatter stringFromNumber:@(toFPS[[[self valueForKey:@"framerate"] integerValue] - 1])];
     NSString *label = [NSString stringWithFormat:@"%@ · %@", resolutionLabel, framerateLabel];
 
     NSDictionary *attributes = @{
