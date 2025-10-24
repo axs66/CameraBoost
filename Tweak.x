@@ -280,12 +280,26 @@ NSString *title(VideoConfigurationMode mode) {
     NSString *message = @"Select video configuration:";
     UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"CameraBoost" message:message preferredStyle:UIAlertControllerStyleAlert];
     NSMutableDictionary <NSString *, NSNumber *> *modes = [NSMutableDictionary dictionary];
-    VideoConfigurationMode currentVideoConfigurationMode = [[NSClassFromString(@"CAMUserPreferences") preferences] videoConfiguration];
-    CAMCaptureCapabilities *capabilities = [NSClassFromString(@"CAMCaptureCapabilities") capabilities];
+    Class userPreferencesClass = NSClassFromString(@"CAMUserPreferences");
+    VideoConfigurationMode currentVideoConfigurationMode = 0;
+    if (userPreferencesClass && [userPreferencesClass respondsToSelector:@selector(preferences)]) {
+        id preferences = [userPreferencesClass preferences];
+        if ([preferences respondsToSelector:@selector(videoConfiguration)]) {
+            currentVideoConfigurationMode = [preferences videoConfiguration];
+        }
+    }
+    
+    Class capabilitiesClass = NSClassFromString(@"CAMCaptureCapabilities");
+    CAMCaptureCapabilities *capabilities = nil;
+    if (capabilitiesClass && [capabilitiesClass respondsToSelector:@selector(capabilities)]) {
+        capabilities = [capabilitiesClass capabilities];
+    }
     for (VideoConfigurationMode mode = 0; mode < VideoConfigurationModeCount; ++mode) {
         if (mode != currentVideoConfigurationMode) {
-            if ([capabilities isSupportedVideoConfiguration:mode forMode:cameraMode device:cameraDevice]) {
-                modes[title(mode)] = @(mode);
+            if (capabilities && [capabilities respondsToSelector:@selector(isSupportedVideoConfiguration:forMode:device:)]) {
+                if ([capabilities isSupportedVideoConfiguration:mode forMode:cameraMode device:cameraDevice]) {
+                    modes[title(mode)] = @(mode);
+                }
             }
         }
     }
@@ -293,9 +307,12 @@ NSString *title(VideoConfigurationMode mode) {
     for (NSString *mode in sortedArray) {
         UIAlertAction *action = [UIAlertAction actionWithTitle:mode style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
             [self _writeUserPreferences];
-            CFPreferencesSetAppValue(cameraMode == 2 ? CFSTR("CAMUserPreferenceSlomoConfiguration") : CFSTR("CAMUserPreferenceVideoConfiguration"), (CFNumberRef)modes[mode], CFSTR("com.apple.camera"));
-            CFPreferencesAppSynchronize(CFSTR("com.apple.camera"));
-            [self readUserPreferencesAndHandleChangesWithOverrides:0];
+            NSNumber *modeNumber = modes[mode];
+            if (modeNumber) {
+                CFPreferencesSetAppValue(cameraMode == 2 ? CFSTR("CAMUserPreferenceSlomoConfiguration") : CFSTR("CAMUserPreferenceVideoConfiguration"), (CFNumberRef)modeNumber, CFSTR("com.apple.camera"));
+                CFPreferencesAppSynchronize(CFSTR("com.apple.camera"));
+                [self readUserPreferencesAndHandleChangesWithOverrides:0];
+            }
         }];
         [alert addAction:action];
     }
@@ -609,7 +626,9 @@ NSString *title(VideoConfigurationMode mode) {
 
     NSNumberFormatter *formatter = [%c(CAMControlStatusIndicator) integerFormatter];
     NSString *resolutionLabel = resolutionLabelFormat;
-    NSString *framerateLabel = [formatter stringFromNumber:@(toFPS[[[self valueForKey:@"framerate"] integerValue] - 1])];
+    NSInteger framerateIndex = [[self valueForKey:@"framerate"] integerValue] - 1;
+    if (framerateIndex < 0 || framerateIndex >= 5) framerateIndex = 0;
+    NSString *framerateLabel = [formatter stringFromNumber:@(toFPS[framerateIndex])];
     NSString *label = [NSString stringWithFormat:@"%@ · %@", resolutionLabel, framerateLabel];
 
     NSDictionary *attributes = @{
@@ -713,7 +732,10 @@ static BOOL shouldHidePauseResumeDuringVideoButton(CAMViewfinderViewController *
     }
 
     // Initialize camera
-    openCamera10();
+    void *cameraHandle = openCamera10();
+    if (!cameraHandle) {
+        NSLog(@"CameraBoost: Failed to load CameraUI framework");
+    }
     %init;
 }
 
