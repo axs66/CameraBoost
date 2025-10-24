@@ -52,7 +52,8 @@ NSString *title(VideoConfigurationMode mode) {
 - (void)_updateText {
     NSDate *startDate = [self valueForKey:@"__startTime"];
     NSDate *currentDate = [NSDate date];
-    NSTimeInterval interval = [currentDate timeIntervalSinceDate:startDate];    
+    NSTimeInterval interval = [currentDate timeIntervalSinceDate:startDate];
+    (void)interval;
     NSDate *timerDate = [NSDate date];
     NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
     NSString *format;
@@ -710,4 +711,5 @@ static BOOL shouldHidePauseResumeDuringVideoButton(CAMViewfinderViewController *
     openCamera10();
     %init;
 }
+
 
