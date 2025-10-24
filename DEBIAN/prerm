@@ -1,11 +1,6 @@
-#!/bin/bash
+#!/bin/sh
 
 # CameraBoost pre-removal script
-
-echo "CameraBoost: Cleaning up..."
-
-# Remove preferences
-rm -f /var/mobile/Library/Preferences/com.cameraboost.cameraboost.plist
 
 echo "CameraBoost: Cleanup complete!"
 
