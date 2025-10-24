@@ -6,8 +6,9 @@ Description: 增强相机功能 - 视频录制暂停/恢复、快速配置切换
 Maintainer: Axs
 Author: Axs
 Section: Tweaks
-Depends: mobilesubstrate (>= 0.9.5000), preferenceloader (>= 2.2.0), com.axs.cameraboost.prefs 
+Depends: mobilesubstrate (>= 0.9.5000), preferenceloader (>= 2.2.0)
 Priority: optional
 Depiction: https://axs66.github.io/repo
 SileoDepiction: https://axs66.github.io/repo/sileo/cameraboost.json
 Icon: https://axs66.github.io/repo/icons/cameraboost.png
+
