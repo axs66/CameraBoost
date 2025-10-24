@@ -51,12 +51,12 @@ NSString *title(VideoConfigurationMode mode) {
 
 - (void)_updateText {
     NSDate *startDate = [self valueForKey:@"__startTime"];
-    NSDate *currentDate = [NSDate date];
+    NSDate *currentDate = [NSDate date"];
     NSTimeInterval interval = [currentDate timeIntervalSinceDate:startDate];
     NSDate *timerDate = [NSDate dateWithTimeIntervalSince1970:interval];
     NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
     NSString *format;
-    
+
     if (subSecondPrecision > 0) {
         switch (subSecondPrecision) {
             case 1: format = @"HH:mm:ss.S"; break;
@@ -67,7 +67,7 @@ NSString *title(VideoConfigurationMode mode) {
     } else {
         format = @"HH:mm:ss";
     }
-    
+
     dateFormatter.dateFormat = format;
     dateFormatter.timeZone = [NSTimeZone timeZoneForSecondsFromGMT:0.0];
     NSString *timeString = [dateFormatter stringFromDate:timerDate];
@@ -79,13 +79,13 @@ NSString *title(VideoConfigurationMode mode) {
     [updateTimer invalidate];
     NSDate *startTime = [[NSDate alloc] init];
     [self setValue:startTime forKey:@"__startTime"];
-    
+
     NSTimeInterval interval = subSecondPrecision > 0 ? (NSTimeInterval)pow(10, -subSecondPrecision) : 1.0;
-    NSTimer *newUpdateTimer = [[NSTimer alloc] initWithFireDate:startTime 
-                                                       interval:interval 
-                                                         target:self 
-                                                       selector:@selector(_updateForTimer:) 
-                                                       userInfo:nil 
+    NSTimer *newUpdateTimer = [[NSTimer alloc] initWithFireDate:startTime
+                                                       interval:interval
+                                                         target:self
+                                                       selector:@selector(_updateForTimer:)
+                                                       userInfo:nil
                                                         repeats:YES];
     [self setValue:newUpdateTimer forKey:@"__updateTimer"];
     [[NSRunLoop currentRunLoop] addTimer:newUpdateTimer forMode:(NSRunLoopMode)kCFRunLoopDefaultMode];
@@ -121,7 +121,7 @@ NSString *title(VideoConfigurationMode mode) {
     @try {
         backgroundView = [self valueForKey:@"_backgroundView"];
     } @catch (NSException *exception) {}
-    
+
     if (isBadgeStyle) {
         backgroundView.tintColor = pause ? UIColor.systemYellowColor : (recording ? defaultColor : UIColor.clearColor);
     } else {
@@ -171,16 +171,23 @@ NSString *title(VideoConfigurationMode mode) {
 // Flash/Torch control during recording
 - (void)_startCapturingVideoWithRequest:(id)arg1 {
     %orig;
-    if (checkModeAndDevice(self._currentMode, self._currentDevice))
+    if (checkModeAndDevice(self._currentMode, self._currentDevice)) {
         self._flashButton.allowsAutomaticFlash = NO;
+    }
 }
 
 - (BOOL)_shouldShowIndicatorOfType:(NSUInteger)type forGraphConfiguration:(CAMCaptureGraphConfiguration *)configuration {
-    return type == 0 && checkModeAndDevice(configuration.mode, configuration.device) && ([self._captureController isCapturingVideo] || [self._captureController isCapturingTimelapse]) ? YES : %orig;
+    if (type == 0 && checkModeAndDevice(configuration.mode, configuration.device) && ([self._captureController isCapturingVideo] || [self._captureController isCapturingTimelapse])) {
+        return YES;
+    }
+    return %orig;
 }
 
 - (BOOL)_shouldHideFlashButtonForGraphConfiguration:(CAMCaptureGraphConfiguration *)configuration {
-    return checkModeAndDevice(configuration.mode, configuration.device) && [self._captureController isCapturingVideo] ? NO : %orig;
+    if (checkModeAndDevice(configuration.mode, configuration.device) && [self._captureController isCapturingVideo]) {
+        return NO;
+    }
+    return %orig;
 }
 
 - (void)_updateTopBarStyleForGraphConfiguration:(CAMCaptureGraphConfiguration *)configuration capturing:(BOOL)capturing animated:(BOOL)animated {
@@ -205,7 +212,14 @@ NSString *title(VideoConfigurationMode mode) {
 
 // Video configuration control
 - (BOOL)_shouldHideFramerateIndicatorForGraphConfiguration:(CAMCaptureGraphConfiguration *)configuration {
-    return [self._captureController isCapturingVideo] || [self._topBar shouldHideFramerateIndicatorForGraphConfiguration:configuration] ? %orig : (configuration.mode == 1 || configuration.mode == 2 ? NO : %orig);
+    if ([self._captureController isCapturingVideo] || [self._topBar shouldHideFramerateIndicatorForGraphConfiguration:configuration]) {
+        return %orig;
+    } else {
+        if (configuration.mode == 1 || configuration.mode == 2) {
+            return NO;
+        }
+        return %orig;
+    }
 }
 
 - (BOOL)_shouldHideFramerateIndicatorForMode:(NSInteger)mode device:(NSInteger)device {
@@ -264,8 +278,9 @@ NSString *title(VideoConfigurationMode mode) {
     CAMCaptureCapabilities *capabilities = [NSClassFromString(@"CAMCaptureCapabilities") capabilities];
     for (VideoConfigurationMode mode = 0; mode < VideoConfigurationModeCount; ++mode) {
         if (mode != currentVideoConfigurationMode) {
-            if ([capabilities isSupportedVideoConfiguration:mode forMode:cameraMode device:cameraDevice])
+            if ([capabilities isSupportedVideoConfiguration:mode forMode:cameraMode device:cameraDevice]) {
                 modes[title(mode)] = @(mode);
+            }
         }
     }
     NSArray <NSString *> *sortedArray = [[modes allKeys] sortedArrayUsingSelector:@selector(localizedCaseInsensitiveCompare:)];
@@ -337,8 +352,9 @@ NSString *title(VideoConfigurationMode mode) {
                 [bottomBar setValue:button forKey:@"pauseResumeDuringVideoButton"];
                 [bottomBar addSubview:button];
             }
-        } else
+        } else {
             [bottomBar setValue:nil forKey:@"pauseResumeDuringVideoButton"];
+        }
     } else {
         CAMDynamicShutterControl *shutterControl = [self valueForKey:@"_dynamicShutterControl"];
         if (!shouldNotEmbed) {
@@ -348,8 +364,9 @@ NSString *title(VideoConfigurationMode mode) {
                 [shutterControl setValue:button forKey:@"pauseResumeDuringVideoButton"];
                 [shutterControl addSubview:button];
             }
-        } else
+        } else {
             [shutterControl setValue:nil forKey:@"pauseResumeDuringVideoButton"];
+        }
     }
 }
 
@@ -378,8 +395,9 @@ NSString *title(VideoConfigurationMode mode) {
         pause = [pauseState boolValue];
     }
     CAMElapsedTimeView *elapsedTimeView = self._elapsedTimeView;
-    if (elapsedTimeView == nil)
+    if (elapsedTimeView == nil) {
         elapsedTimeView = [self.view valueForKey:@"_elapsedTimeView"];
+    }
     if ([elapsedTimeView respondsToSelector:@selector(updateUI:recording:)]) {
         [elapsedTimeView performSelector:@selector(updateUI:recording:) withObject:@(pause) withObject:@(YES)];
     }
@@ -393,13 +411,18 @@ NSString *title(VideoConfigurationMode mode) {
         shutterControl = [self valueForKey:@"_dynamicShutterControl"];
     } @catch (NSException *exception) {}
     if (shutterControl) {
-        if (pause)
+        if (pause) {
             [shutterControl setValue:@(YES) forKey:@"overrideShutterButtonColor"];
-        [shutterControl _updateRendererShapes];
+            if ([shutterControl respondsToSelector:@selector(_updateRendererShapes)]) {
+                [shutterControl _updateRendererShapes];
+            }
+        } else {
+            if ([shutterControl respondsToSelector:@selector(_updateRendererShapes)]) {
+                [shutterControl _updateRendererShapes];
+            }
+        }
         id renderer = [shutterControl valueForKey:@"_liquidShutterRenderer"];
-        // Skip renderIfNecessary call as it's not available in iOS 14.5-16.6.1
-        else if ([shutterControl respondsToSelector:@selector(_updateRendererShapes)])
-            [shutterControl _updateRendererShapes];
+        // renderer may be unused on some iOS versions; intentionally not calling renderIfNecessary for compatibility
         [shutterControl setValue:@(NO) forKey:@"overrideShutterButtonColor"];
     }
     if ([self respondsToSelector:@selector(_updatePauseResumeDuringVideoButton:)]) {
@@ -428,30 +451,33 @@ NSString *title(VideoConfigurationMode mode) {
     %orig;
     BOOL shouldHide = shouldHidePauseResumeDuringVideoButton(self);
     [[self valueForKey:@"_pauseResumeDuringVideoButton"] setAlpha:shouldHide ? 0 : 1];
-    if (!shouldHide)
+    if (!shouldHide) {
         if ([self respondsToSelector:@selector(_updatePauseResumeDuringVideoButton:)]) {
             [self performSelector:@selector(_updatePauseResumeDuringVideoButton:) withObject:@(NO)];
         }
+    }
 }
 
 - (void)_showControlsForGraphConfiguration:(CAMCaptureGraphConfiguration *)graphConfiguration animated:(BOOL)animated {
     %orig;
     BOOL shouldHide = shouldHidePauseResumeDuringVideoButton(self);
     [[self valueForKey:@"_pauseResumeDuringVideoButton"] setAlpha:shouldHide ? 0 : 1];
-    if (!shouldHide)
+    if (!shouldHide) {
         if ([self respondsToSelector:@selector(_updatePauseResumeDuringVideoButton:)]) {
             [self performSelector:@selector(_updatePauseResumeDuringVideoButton:) withObject:@(NO)];
         }
+    }
 }
 
 - (void)_showControlsForMode:(NSInteger)mode device:(NSInteger)device animated:(BOOL)animated {
     %orig;
     BOOL shouldHide = shouldHidePauseResumeDuringVideoButton(self);
     [[self valueForKey:@"_pauseResumeDuringVideoButton"] setAlpha:shouldHide ? 0 : 1];
-    if (!shouldHide)
+    if (!shouldHide) {
         if ([self respondsToSelector:@selector(_updatePauseResumeDuringVideoButton:)]) {
             [self performSelector:@selector(_updatePauseResumeDuringVideoButton:) withObject:@(NO)];
         }
+    }
 }
 
 - (void)_hideControlsForGraphConfiguration:(CAMCaptureGraphConfiguration *)graphConfiguration animated:(BOOL)animated {
@@ -478,9 +504,9 @@ NSString *title(VideoConfigurationMode mode) {
 
 %new(v@:l)
 - (void)_layoutPauseResumeDuringVideoButtonForLayoutStyle:(NSInteger)layoutStyle {
-    if (![[self class] wantsVerticalBarForLayoutStyle:layoutStyle])
+    if (![[self class] wantsVerticalBarForLayoutStyle:layoutStyle]) {
         layoutPauseResumeDuringVideoButton(self, [self valueForKey:@"pauseResumeDuringVideoButton"], self.shutterButton, self.traitCollection.displayScale, NO);
-    else {
+    } else {
         CGRect frame = self.frame;
         CGFloat maxY = CGRectGetMaxY(frame) - (2 * (BUTTON_SIZE + 16.0));
         CGFloat midX = CGRectGetWidth(frame) / 2 - (BUTTON_SIZE / 2);
@@ -490,9 +516,9 @@ NSString *title(VideoConfigurationMode mode) {
 
 %new(v@:@)
 - (void)_layoutPauseResumeDuringVideoButtonForTraitCollection:(UITraitCollection *)traitCollection {
-    if (![[self class] wantsVerticalBarForTraitCollection:traitCollection])
+    if (![[self class] wantsVerticalBarForTraitCollection:traitCollection]) {
         layoutPauseResumeDuringVideoButton(self, [self valueForKey:@"pauseResumeDuringVideoButton"], self.shutterButton, traitCollection.displayScale, NO);
-    else {
+    } else {
         CGRect frame = self.frame;
         CGFloat maxY = CGRectGetMaxY(frame) - (2 * (BUTTON_SIZE + 16.0));
         CGFloat midX = CGRectGetWidth(frame) / 2 - (BUTTON_SIZE / 2);
@@ -502,14 +528,15 @@ NSString *title(VideoConfigurationMode mode) {
 
 - (void)layoutSubviews {
     %orig;
-    if ([self respondsToSelector:@selector(layoutStyle)])
+    if ([self respondsToSelector:@selector(layoutStyle)]) {
         if ([self respondsToSelector:@selector(_layoutPauseResumeDuringVideoButtonForLayoutStyle:)]) {
             [self performSelector:@selector(_layoutPauseResumeDuringVideoButtonForLayoutStyle:) withObject:@([self layoutStyle])];
         }
-    else
+    } else {
         if ([self respondsToSelector:@selector(_layoutPauseResumeDuringVideoButtonForTraitCollection:)]) {
             [self performSelector:@selector(_layoutPauseResumeDuringVideoButtonForTraitCollection:) withObject:self.traitCollection];
         }
+    }
 }
 
 %end
@@ -632,10 +659,11 @@ static void layoutPauseResumeDuringVideoButton(UIView *view, CUShutterButton *bu
     CGFloat y = midY - (size.height / 2);
     CGFloat x;
     CGRect bounds = view.bounds;
-    if (fixedPosition)
+    if (fixedPosition) {
         x = CGRectGetMinX(bounds) + 15;
-    else
+    } else {
         x = CGRectGetMaxX(bounds) - size.width - 15;
+    }
     button.tappableEdgeInsets = UIEdgeInsetsMake(20, 20, 20, 20);
     button.frame = [button frameForAlignmentRect:CGRectMake(x, y, rect.size.width, rect.size.height)];
 }
@@ -644,20 +672,25 @@ static BOOL shouldHidePauseResumeDuringVideoButton(CAMViewfinderViewController *
     CAMCaptureGraphConfiguration *configuration = nil;
     if ([self respondsToSelector:@selector(_currentGraphConfiguration)]) {
         configuration = [self _currentGraphConfiguration];
-        if ([self respondsToSelector:@selector(_isSpatialVideoInVideoModeActiveForMode:devicePosition:)] && [self _isSpatialVideoInVideoModeActiveForMode:configuration.mode devicePosition:configuration.devicePosition])
+        if ([self respondsToSelector:@selector(_isSpatialVideoInVideoModeActiveForMode:devicePosition:)] && [self _isSpatialVideoInVideoModeActiveForMode:configuration.mode devicePosition:configuration.devicePosition]) {
             return YES;
-        if (configuration.videoEncodingBehavior > 1)
+        }
+        if (configuration.videoEncodingBehavior > 1) {
             return YES;
+        }
     }
     CUCaptureController *cuc = [self _captureController];
-    if ([cuc respondsToSelector:@selector(isCapturingCTMVideo)] && [cuc isCapturingCTMVideo])
+    if ([cuc respondsToSelector:@selector(isCapturingCTMVideo)] && [cuc isCapturingCTMVideo]) {
         return YES;
-    if (configuration)
+    }
+    if (configuration) {
         return [self _shouldHideStillDuringVideoButtonForGraphConfiguration:configuration];
+    }
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
-    return [self _shouldHideStillDuringVideoButtonForMode:self._currentMode device:self._currentDevice];
+    BOOL result = [self _shouldHideStillDuringVideoButtonForMode:self._currentMode device:self._currentDevice];
 #pragma clang diagnostic pop
+    return result;
 }
 
 // ============================================================================
@@ -666,8 +699,10 @@ static BOOL shouldHidePauseResumeDuringVideoButton(CAMViewfinderViewController *
 %ctor {
     // Load user preferences
     subSecondPrecision = [[NSUserDefaults standardUserDefaults] integerForKey:@"CameraBoost_SubSecondPrecision"];
-    if (subSecondPrecision <= 0) subSecondPrecision = 0;
-    
+    if (subSecondPrecision <= 0) {
+        subSecondPrecision = 0;
+    }
+
     // Initialize camera
     openCamera10();
     %init;
