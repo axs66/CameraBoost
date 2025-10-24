@@ -1,4 +1,4 @@
-#import <CoreImage/CoreImage.h>
+#import <CoreImagePrivate/CoreImage.h>
 
 @interface CIColorPosterize : CIFilter
 @property (retain, nonatomic) NSNumber *inputLevels;
