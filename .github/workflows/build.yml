@@ -27,6 +27,11 @@ jobs:
       - name: Clean previous packages
         run: rm -f ${{ github.workspace }}/packages/*.deb
 
+      - name: Fix line endings
+        run: |
+          brew install dos2unix || true
+          dos2unix control  
+
       - name: Build DEB (rootless + roothide)
         run: |
           make package FINALPACKAGE=1 THEOS_PACKAGE_SCHEME=rootless
