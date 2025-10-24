@@ -92,20 +92,31 @@ NSString *title(VideoConfigurationMode mode) {
 - (void)pauseTimer {
     NSTimer *timer = [self valueForKey:@"__updateTimer"];
     if (timer == nil) return;
-    objc_setAssociatedObject(timer, (__bridge const void *)(NSTimerPauseDate), [NSDate date], OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-    objc_setAssociatedObject(timer, (__bridge const void *)(NSTimerPreviousFireDate), timer.fireDate, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    objc_setAssociatedObject(timer, NSTimerPauseDate, [NSDate date], OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    objc_setAssociatedObject(timer, NSTimerPreviousFireDate, timer.fireDate, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
     timer.fireDate = [NSDate distantFuture];
 }
 
 %new(v@:)
 - (void)resumeTimer {
     NSTimer *timer = [self valueForKey:@"__updateTimer"];
-    NSDate *pauseDate = objc_getAssociatedObject(timer, (__bridge const void *)NSTimerPauseDate);
-    NSDate *previousFireDate = objc_getAssociatedObject(timer, (__bridge const void *)NSTimerPreviousFireDate);
+    NSDate *pauseDate = objc_getAssociatedObject(timer, NSTimerPauseDate);
+    NSDate *previousFireDate = objc_getAssociatedObject(timer, NSTimerPreviousFireDate);
     const NSTimeInterval pauseTime = -[pauseDate timeIntervalSinceNow];
     timer.fireDate = [NSDate dateWithTimeInterval:pauseTime sinceDate:previousFireDate];
     NSDate *newStartDate = [NSDate dateWithTimeInterval:pauseTime sinceDate:[self valueForKey:@"__startTime"]];
     [self setValue:newStartDate forKey:@"__startTime"];
+}
+
+%new(v@:@)
+- (UIImage *)_flatImageWithColor:(UIColor *)color {
+    CGSize size = CGSizeMake(1, 1);
+    UIGraphicsBeginImageContextWithOptions(size, NO, 0);
+    [color setFill];
+    UIRectFill(CGRectMake(0, 0, size.width, size.height));
+    UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+    return image;
 }
 
 %new(v@:BB)
@@ -123,17 +134,17 @@ NSString *title(VideoConfigurationMode mode) {
         UIColor *recordingImageColor = pause ? UIColor.systemYellowColor : defaultColor;
         self._timeLabel.textColor = pause ? UIColor.systemYellowColor : UIColor.whiteColor;
         if ([self respondsToSelector:@selector(_recordingImageView)] && self._recordingImageView)
-            self._recordingImageView.image = [self._recordingImageView.image _flatImageWithColor:recordingImageColor];
+            self._recordingImageView.image = [self _flatImageWithColor:recordingImageColor];
         if (backgroundView)
-            backgroundView.image = [backgroundView.image _flatImageWithColor:recordingImageColor];
+            backgroundView.image = [self _flatImageWithColor:recordingImageColor];
     }
 }
 
 - (void)endTimer {
     NSTimer *timer = [self valueForKey:@"__updateTimer"];
     if (timer == nil) return;
-    objc_setAssociatedObject(timer, (__bridge const void *)(NSTimerPauseDate), nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-    objc_setAssociatedObject(timer, (__bridge const void *)(NSTimerPreviousFireDate), nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    objc_setAssociatedObject(timer, NSTimerPauseDate, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    objc_setAssociatedObject(timer, NSTimerPreviousFireDate, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
     [self updateUI:NO recording:NO];
     %orig;
 }
@@ -188,7 +199,7 @@ NSString *title(VideoConfigurationMode mode) {
 }
 
 - (BOOL)_shouldHideFramerateIndicatorForMode:(NSInteger)mode device:(NSInteger)device {
-    return [UIApplication shouldMakeUIForDefaultPNG];
+    return NO;
 }
 
 - (void)_createFramerateIndicatorViewIfNecessary {
@@ -204,8 +215,8 @@ NSString *title(VideoConfigurationMode mode) {
 - (void)_updateFramerateIndicatorTextForGraphConfiguration:(CAMCaptureGraphConfiguration *)configuration {
     CAMFramerateIndicatorView *view = [self valueForKey:@"_framerateIndicatorView"];
     if (view) {
-        view.resolution = [self _videoConfigurationResolutionForGraphConfiguration:configuration];
-        view.framerate = [self _videoConfigurationFramerateForGraphConfiguration:configuration];
+        [view setValue:@([self _videoConfigurationResolutionForGraphConfiguration:configuration]) forKey:@"resolution"];
+        [view setValue:@([self _videoConfigurationFramerateForGraphConfiguration:configuration]) forKey:@"framerate"];
     }
     %orig;
 }
@@ -228,19 +239,40 @@ NSString *title(VideoConfigurationMode mode) {
     [self changeVideoConfigurationMode:nil];
 }
 
+%new(v@:@)
+- (void)changeVideoConfigurationMode:(UITapGestureRecognizer *)gesture {
+    NSInteger cameraMode = self._currentGraphConfiguration.mode;
+    NSInteger cameraDevice = self._currentGraphConfiguration.device == 0 ? 0 : devices[self._currentGraphConfiguration.device - 1];
+    NSString *message = @"Select video configuration:";
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"CameraBoost" message:message preferredStyle:UIAlertControllerStyleAlert];
+    NSMutableDictionary <NSString *, NSNumber *> *modes = [NSMutableDictionary dictionary];
+    VideoConfigurationMode currentVideoConfigurationMode = [[NSClassFromString(@"CAMUserPreferences") preferences] videoConfiguration];
+    CAMCaptureCapabilities *capabilities = [NSClassFromString(@"CAMCaptureCapabilities") capabilities];
+    for (VideoConfigurationMode mode = 0; mode < VideoConfigurationModeCount; ++mode) {
+        if (mode != currentVideoConfigurationMode) {
+            if ([capabilities isSupportedVideoConfiguration:mode forMode:cameraMode device:cameraDevice])
+                modes[title(mode)] = @(mode);
+        }
+    }
+    NSArray <NSString *> *sortedArray = [[modes allKeys] sortedArrayUsingSelector:@selector(localizedCaseInsensitiveCompare:)];
+    for (NSString *mode in sortedArray) {
+        UIAlertAction *action = [UIAlertAction actionWithTitle:mode style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+            [self _writeUserPreferences];
+            CFPreferencesSetAppValue(cameraMode == 2 ? CFSTR("CAMUserPreferenceSlomoConfiguration") : CFSTR("CAMUserPreferenceVideoConfiguration"), (CFNumberRef)modes[mode], CFSTR("com.apple.camera"));
+            CFPreferencesAppSynchronize(CFSTR("com.apple.camera"));
+            [self readUserPreferencesAndHandleChangesWithOverrides:0];
+        }];
+        [alert addAction:action];
+    }
+    UIAlertAction *defaultAction = [UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:nil];
+    [alert addAction:defaultAction];
+    [self presentViewController:alert animated:YES completion:nil];
+}
+
 // Pause/Resume video recording functionality
 - (void)_createVideoControlsIfNecessary {
     %orig;
     [self _createPauseResumeDuringVideoButtonIfNecessary];
-}
-
-%new(v@:B)
-- (void)_updatePauseResumeDuringVideoButton:(BOOL)paused {
-    CUShutterButton *button = self._pauseResumeDuringVideoButton;
-    UIView *innerView = button._innerView;
-    UIImageView *pauseIcon = [button viewWithTag:2024];
-    innerView.hidden = !paused;
-    pauseIcon.hidden = paused;
 }
 
 %new(v@:)
@@ -274,6 +306,15 @@ NSString *title(VideoConfigurationMode mode) {
     [self _embedPauseResumeDuringVideoButtonWithLayoutStyle:layoutStyle];
 }
 
+%new(v@:B)
+- (void)_updatePauseResumeDuringVideoButton:(BOOL)paused {
+    CUShutterButton *button = self._pauseResumeDuringVideoButton;
+    UIView *innerView = button._innerView;
+    UIImageView *pauseIcon = [button viewWithTag:2024];
+    innerView.hidden = !paused;
+    pauseIcon.hidden = paused;
+}
+
 %new(v@:l)
 - (void)_embedPauseResumeDuringVideoButtonWithLayoutStyle:(NSInteger)layoutStyle {
     CUShutterButton *button = self._pauseResumeDuringVideoButton;
@@ -303,6 +344,37 @@ NSString *title(VideoConfigurationMode mode) {
     }
 }
 
+%new(v@:)
+- (void)_createPauseResumeDuringVideoButtonIfNecessary {
+    if (self._pauseResumeDuringVideoButton) return;
+    NSInteger layoutStyle = [self respondsToSelector:@selector(_layoutStyle)] ? self._layoutStyle : 1;
+    Class CUShutterButtonClass = %c(CUShutterButton);
+    CUShutterButton *button = [CUShutterButtonClass respondsToSelector:@selector(smallShutterButtonWithLayoutStyle:)]
+        ? [CUShutterButtonClass smallShutterButtonWithLayoutStyle:layoutStyle]
+        : [CUShutterButtonClass smallShutterButton];
+    UIView *innerView = button._innerView;
+    UIImage *pauseImage;
+    if (@available(iOS 13.0, *)) {
+        pauseImage = [UIImage systemImageNamed:@"pause.fill" withConfiguration:[UIImageSymbolConfiguration configurationWithPointSize:24]];
+    } else {
+        NSBundle *bundle = [NSBundle bundleWithPath:@"/Library/Application Support/CameraBoost.bundle"];
+        pauseImage = [UIImage imageNamed:@"pause.fill" inBundle:bundle compatibleWithTraitCollection:nil];
+    }
+    UIImageView *pauseIcon = [[UIImageView alloc] initWithImage:pauseImage];
+    pauseIcon.tintColor = UIColor.whiteColor;
+    pauseIcon.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+    pauseIcon.contentMode = UIViewContentModeCenter;
+    pauseIcon.frame = innerView.bounds;
+    pauseIcon.tag = 2024;
+    [button addSubview:pauseIcon];
+    innerView.hidden = YES;
+    self._pauseResumeDuringVideoButton = button;
+    [button addTarget:self action:@selector(handlePauseResumeDuringVideoButtonPressed:) forControlEvents:UIControlEventTouchUpInside];
+    button.mode = 1;
+    button.exclusiveTouch = YES;
+    [self _embedPauseResumeDuringVideoButtonWithLayoutStyle:layoutStyle];
+}
+
 %new(v@:@)
 - (void)handlePauseResumeDuringVideoButtonPressed:(CUShutterButton *)button {
     CUCaptureController *cuc = [self _captureController];
@@ -329,7 +401,7 @@ NSString *title(VideoConfigurationMode mode) {
         if (pause)
             shutterControl.overrideShutterButtonColor = YES;
         [shutterControl _updateRendererShapes];
-        CAMLiquidShutterRenderer *renderer = [shutterControl valueForKey:@"_liquidShutterRenderer"];
+        id renderer = [shutterControl valueForKey:@"_liquidShutterRenderer"];
         if ([renderer respondsToSelector:@selector(renderIfNecessary)])
             [renderer renderIfNecessary];
         else if ([shutterControl respondsToSelector:@selector(_updateRendererShapes)])
@@ -516,7 +588,7 @@ NSString *title(VideoConfigurationMode mode) {
     }
 
     NSNumberFormatter *formatter = [%c(CAMControlStatusIndicator) integerFormatter];
-    NSString *resolutionLabel = CAMLocalizedFrameworkString(resolutionLabelFormat);
+    NSString *resolutionLabel = resolutionLabelFormat;
     NSString *framerateLabel = [formatter stringFromNumber:@(toFPS[self.framerate - 1])];
     NSString *label = [NSString stringWithFormat:@"%@ · %@", resolutionLabel, framerateLabel];
 
@@ -524,7 +596,7 @@ NSString *title(VideoConfigurationMode mode) {
         @"CTFeatureTypeIdentifier": @(35),
         @"CTFeatureSelectorIdentifier": @(2)
     };
-    UIFont *font = [UIFont cui_cameraFontOfSize:fontSize];
+    UIFont *font = [UIFont systemFontOfSize:fontSize];
     UIFontDescriptor *fontDescriptor = [font fontDescriptor];
     NSDictionary *fontAttributes = @{
         (id)kCTFontFeatureSettingsAttribute: attributes
@@ -534,7 +606,7 @@ NSString *title(VideoConfigurationMode mode) {
 
     NSDictionary *attributedStringAttributes = @{
         (id)kCTFontAttributeName: newFont,
-        (id)kCTKernAttributeName: @([UIFont cui_cameraKerningForFont:newFont])
+        (id)kCTKernAttributeName: @(0.0)
     };
 
     NSAttributedString *finalLabel = [[NSAttributedString alloc] initWithString:label attributes:attributedStringAttributes];
@@ -570,13 +642,13 @@ NSString *title(VideoConfigurationMode mode) {
 // ============================================================================
 static void layoutPauseResumeDuringVideoButton(UIView *view, CUShutterButton *button, UIView *shutterButton, CGFloat displayScale, BOOL fixedPosition) {
     CGSize size = [button intrinsicContentSize];
-    CGRect rect = UIRectIntegralWithScale(CGRectMake(0, 0, size.width, size.height), displayScale);
+    CGRect rect = CGRectMake(0, 0, size.width, size.height);
     CGRect alignmentRect = [shutterButton alignmentRectForFrame:shutterButton.frame];
     CGFloat midY = CGRectGetMidY(alignmentRect);
-    CGFloat y = UIRoundToViewScale(midY - (size.height / 2), view);
+    CGFloat y = midY - (size.height / 2);
     CGFloat x;
     CGRect bounds = view.bounds;
-    if ([view _shouldReverseLayoutDirection] || fixedPosition)
+    if (fixedPosition)
         x = CGRectGetMinX(bounds) + 15;
     else
         x = CGRectGetMaxX(bounds) - size.width - 15;
