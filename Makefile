@@ -10,9 +10,7 @@ TWEAK_NAME = CameraBoost
 
 CameraBoost_FILES = Tweak.x
 CameraBoost_CFLAGS = -fobjc-arc -I./PSHeader
-CameraBoost_FRAMEWORKS = UIKit Foundation CoreFoundation
-// CameraBoost_PRIVATE_FRAMEWORKS = CameraUI CameraKit
 CameraBoost_FRAMEWORKS = UIKit CoreGraphics CoreText
+# CameraBoost_PRIVATE_FRAMEWORKS = CameraUI CameraKit  # 注释掉，避免编译报错
 
 include $(THEOS)/makefiles/tweak.mk
-
