@@ -53,27 +53,32 @@ NSString *title(VideoConfigurationMode mode) {
     NSDate *startDate = [self valueForKey:@"__startTime"];
     NSDate *currentDate = [NSDate date];
     NSTimeInterval interval = [currentDate timeIntervalSinceDate:startDate];
-    (void)interval;
-    NSDate *timerDate = [NSDate date];
-    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
-    NSString *format;
 
-    if (subSecondPrecision > 0) {
-        switch (subSecondPrecision) {
-            case 1: format = @"HH:mm:ss.S"; break;
-            case 2: format = @"HH:mm:ss.SS"; break;
-            case 3: format = @"HH:mm:ss.SSS"; break;
-            default: format = @"HH:mm:ss"; break;
-        }
-    } else {
-        format = @"HH:mm:ss";
+    // 根据 subSecondPrecision 选择格式
+    NSString *format;
+    switch (subSecondPrecision) {
+        case 1: format = @"HH:mm:ss.S"; break;
+        case 2: format = @"HH:mm:ss.SS"; break;
+        case 3: format = @"HH:mm:ss.SSS"; break;
+        default: format = @"HH:mm:ss"; break;
     }
 
+    static NSDateFormatter *dateFormatter = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        dateFormatter = [[NSDateFormatter alloc] init];
+        dateFormatter.timeZone = [NSTimeZone timeZoneForSecondsFromGMT:0];
+    });
+
     dateFormatter.dateFormat = format;
-    dateFormatter.timeZone = [NSTimeZone timeZoneForSecondsFromGMT:0.0];
+
+    // 使用 interval 来生成时间（相对 1970）
+    NSDate *timerDate = [NSDate dateWithTimeIntervalSince1970:interval];
     NSString *timeString = [dateFormatter stringFromDate:timerDate];
+
     [self _timeLabel].text = timeString;
 }
+
 
 - (void)startTimer {
     NSTimer *updateTimer = [self valueForKey:@"__updateTimer"];
@@ -711,5 +716,4 @@ static BOOL shouldHidePauseResumeDuringVideoButton(CAMViewfinderViewController *
     openCamera10();
     %init;
 }
-
 
