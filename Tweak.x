@@ -108,17 +108,6 @@ NSString *title(VideoConfigurationMode mode) {
     [self setValue:newStartDate forKey:@"__startTime"];
 }
 
-%new(v@:@)
-- (UIImage *)_flatImageWithColor:(UIColor *)color {
-    CGSize size = CGSizeMake(1, 1);
-    UIGraphicsBeginImageContextWithOptions(size, NO, 0);
-    [color setFill];
-    UIRectFill(CGRectMake(0, 0, size.width, size.height));
-    UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
-    UIGraphicsEndImageContext();
-    return image;
-}
-
 %new(v@:BB)
 - (void)updateUI:(BOOL)pause recording:(BOOL)recording {
     BOOL isBadgeStyle = [self respondsToSelector:@selector(usingBadgeAppearance)] && [self usingBadgeAppearance];
@@ -133,10 +122,24 @@ NSString *title(VideoConfigurationMode mode) {
     } else {
         UIColor *recordingImageColor = pause ? UIColor.systemYellowColor : defaultColor;
         self._timeLabel.textColor = pause ? UIColor.systemYellowColor : UIColor.whiteColor;
-        if ([self respondsToSelector:@selector(_recordingImageView)] && self._recordingImageView)
-            self._recordingImageView.image = [self _flatImageWithColor:recordingImageColor];
-        if (backgroundView)
-            backgroundView.image = [self _flatImageWithColor:recordingImageColor];
+        if ([self respondsToSelector:@selector(_recordingImageView)] && self._recordingImageView) {
+            CGSize size = CGSizeMake(1, 1);
+            UIGraphicsBeginImageContextWithOptions(size, NO, 0);
+            [recordingImageColor setFill];
+            UIRectFill(CGRectMake(0, 0, size.width, size.height));
+            UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
+            UIGraphicsEndImageContext();
+            self._recordingImageView.image = image;
+        }
+        if (backgroundView) {
+            CGSize size = CGSizeMake(1, 1);
+            UIGraphicsBeginImageContextWithOptions(size, NO, 0);
+            [recordingImageColor setFill];
+            UIRectFill(CGRectMake(0, 0, size.width, size.height));
+            UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
+            UIGraphicsEndImageContext();
+            backgroundView.image = image;
+        }
     }
 }
 
@@ -306,6 +309,35 @@ NSString *title(VideoConfigurationMode mode) {
     [self _embedPauseResumeDuringVideoButtonWithLayoutStyle:layoutStyle];
 }
 
+%new(v@:l)
+- (void)_embedPauseResumeDuringVideoButtonWithLayoutStyle:(NSInteger)layoutStyle {
+    CUShutterButton *button = self._pauseResumeDuringVideoButton;
+    BOOL shouldNotEmbed = layoutStyle == 2 ? YES : ([self respondsToSelector:@selector(isEmulatingImagePicker)] ? [self isEmulatingImagePicker] : NO);
+    if ([self respondsToSelector:@selector(_shouldCreateAndEmbedControls)] ? [self _shouldCreateAndEmbedControls] : YES) {
+        CAMBottomBar *bottomBar = self.viewfinderView.bottomBar;
+        if (!shouldNotEmbed) {
+            CUShutterButton *existingButton = bottomBar.pauseResumeDuringVideoButton;
+            if (existingButton != button) {
+                [existingButton removeFromSuperview];
+                bottomBar.pauseResumeDuringVideoButton = button;
+                [bottomBar addSubview:button];
+            }
+        } else
+            bottomBar.pauseResumeDuringVideoButton = nil;
+    } else {
+        CAMDynamicShutterControl *shutterControl = [self valueForKey:@"_dynamicShutterControl"];
+        if (!shouldNotEmbed) {
+            CUShutterButton *existingButton = shutterControl.pauseResumeDuringVideoButton;
+            if (existingButton != button) {
+                [existingButton removeFromSuperview];
+                shutterControl.pauseResumeDuringVideoButton = button;
+                [shutterControl addSubview:button];
+            }
+        } else
+            shutterControl.pauseResumeDuringVideoButton = nil;
+    }
+}
+
 %new(v@:B)
 - (void)_updatePauseResumeDuringVideoButton:(BOOL)paused {
     CUShutterButton *button = self._pauseResumeDuringVideoButton;
@@ -342,37 +374,6 @@ NSString *title(VideoConfigurationMode mode) {
         } else
             shutterControl.pauseResumeDuringVideoButton = nil;
     }
-}
-
-%new(v@:)
-- (void)_createPauseResumeDuringVideoButtonIfNecessary {
-    if (self._pauseResumeDuringVideoButton) return;
-    NSInteger layoutStyle = [self respondsToSelector:@selector(_layoutStyle)] ? self._layoutStyle : 1;
-    Class CUShutterButtonClass = %c(CUShutterButton);
-    CUShutterButton *button = [CUShutterButtonClass respondsToSelector:@selector(smallShutterButtonWithLayoutStyle:)]
-        ? [CUShutterButtonClass smallShutterButtonWithLayoutStyle:layoutStyle]
-        : [CUShutterButtonClass smallShutterButton];
-    UIView *innerView = button._innerView;
-    UIImage *pauseImage;
-    if (@available(iOS 13.0, *)) {
-        pauseImage = [UIImage systemImageNamed:@"pause.fill" withConfiguration:[UIImageSymbolConfiguration configurationWithPointSize:24]];
-    } else {
-        NSBundle *bundle = [NSBundle bundleWithPath:@"/Library/Application Support/CameraBoost.bundle"];
-        pauseImage = [UIImage imageNamed:@"pause.fill" inBundle:bundle compatibleWithTraitCollection:nil];
-    }
-    UIImageView *pauseIcon = [[UIImageView alloc] initWithImage:pauseImage];
-    pauseIcon.tintColor = UIColor.whiteColor;
-    pauseIcon.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-    pauseIcon.contentMode = UIViewContentModeCenter;
-    pauseIcon.frame = innerView.bounds;
-    pauseIcon.tag = 2024;
-    [button addSubview:pauseIcon];
-    innerView.hidden = YES;
-    self._pauseResumeDuringVideoButton = button;
-    [button addTarget:self action:@selector(handlePauseResumeDuringVideoButtonPressed:) forControlEvents:UIControlEventTouchUpInside];
-    button.mode = 1;
-    button.exclusiveTouch = YES;
-    [self _embedPauseResumeDuringVideoButtonWithLayoutStyle:layoutStyle];
 }
 
 %new(v@:@)
