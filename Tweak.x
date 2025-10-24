@@ -280,7 +280,7 @@ NSString *title(VideoConfigurationMode mode) {
 
 %new(v@:)
 - (void)_createPauseResumeDuringVideoButtonIfNecessary {
-    if (self._pauseResumeDuringVideoButton) return;
+    if ([self valueForKey:@"_pauseResumeDuringVideoButton"]) return;
     NSInteger layoutStyle = [self respondsToSelector:@selector(_layoutStyle)] ? self._layoutStyle : 1;
     Class CUShutterButtonClass = %c(CUShutterButton);
     CUShutterButton *button = [CUShutterButtonClass respondsToSelector:@selector(smallShutterButtonWithLayoutStyle:)]
@@ -302,7 +302,7 @@ NSString *title(VideoConfigurationMode mode) {
     pauseIcon.tag = 2024;
     [button addSubview:pauseIcon];
     innerView.hidden = YES;
-    self._pauseResumeDuringVideoButton = button;
+    [self setValue:button forKey:@"_pauseResumeDuringVideoButton"];
     [button addTarget:self action:@selector(handlePauseResumeDuringVideoButtonPressed:) forControlEvents:UIControlEventTouchUpInside];
     button.mode = 1;
     button.exclusiveTouch = YES;
@@ -311,69 +311,40 @@ NSString *title(VideoConfigurationMode mode) {
 
 %new(v@:l)
 - (void)_embedPauseResumeDuringVideoButtonWithLayoutStyle:(NSInteger)layoutStyle {
-    CUShutterButton *button = self._pauseResumeDuringVideoButton;
+    CUShutterButton *button = [self valueForKey:@"_pauseResumeDuringVideoButton"];
     BOOL shouldNotEmbed = layoutStyle == 2 ? YES : ([self respondsToSelector:@selector(isEmulatingImagePicker)] ? [self isEmulatingImagePicker] : NO);
     if ([self respondsToSelector:@selector(_shouldCreateAndEmbedControls)] ? [self _shouldCreateAndEmbedControls] : YES) {
         CAMBottomBar *bottomBar = self.viewfinderView.bottomBar;
         if (!shouldNotEmbed) {
-            CUShutterButton *existingButton = bottomBar.pauseResumeDuringVideoButton;
+            CUShutterButton *existingButton = [bottomBar valueForKey:@"pauseResumeDuringVideoButton"];
             if (existingButton != button) {
                 [existingButton removeFromSuperview];
-                bottomBar.pauseResumeDuringVideoButton = button;
+                [bottomBar setValue:button forKey:@"pauseResumeDuringVideoButton"];
                 [bottomBar addSubview:button];
             }
         } else
-            bottomBar.pauseResumeDuringVideoButton = nil;
+            [bottomBar setValue:nil forKey:@"pauseResumeDuringVideoButton"];
     } else {
         CAMDynamicShutterControl *shutterControl = [self valueForKey:@"_dynamicShutterControl"];
         if (!shouldNotEmbed) {
-            CUShutterButton *existingButton = shutterControl.pauseResumeDuringVideoButton;
+            CUShutterButton *existingButton = [shutterControl valueForKey:@"pauseResumeDuringVideoButton"];
             if (existingButton != button) {
                 [existingButton removeFromSuperview];
-                shutterControl.pauseResumeDuringVideoButton = button;
+                [shutterControl setValue:button forKey:@"pauseResumeDuringVideoButton"];
                 [shutterControl addSubview:button];
             }
         } else
-            shutterControl.pauseResumeDuringVideoButton = nil;
+            [shutterControl setValue:nil forKey:@"pauseResumeDuringVideoButton"];
     }
 }
 
 %new(v@:B)
 - (void)_updatePauseResumeDuringVideoButton:(BOOL)paused {
-    CUShutterButton *button = self._pauseResumeDuringVideoButton;
+    CUShutterButton *button = [self valueForKey:@"_pauseResumeDuringVideoButton"];
     UIView *innerView = button._innerView;
     UIImageView *pauseIcon = [button viewWithTag:2024];
     innerView.hidden = !paused;
     pauseIcon.hidden = paused;
-}
-
-%new(v@:l)
-- (void)_embedPauseResumeDuringVideoButtonWithLayoutStyle:(NSInteger)layoutStyle {
-    CUShutterButton *button = self._pauseResumeDuringVideoButton;
-    BOOL shouldNotEmbed = layoutStyle == 2 ? YES : ([self respondsToSelector:@selector(isEmulatingImagePicker)] ? [self isEmulatingImagePicker] : NO);
-    if ([self respondsToSelector:@selector(_shouldCreateAndEmbedControls)] ? [self _shouldCreateAndEmbedControls] : YES) {
-        CAMBottomBar *bottomBar = self.viewfinderView.bottomBar;
-        if (!shouldNotEmbed) {
-            CUShutterButton *existingButton = bottomBar.pauseResumeDuringVideoButton;
-            if (existingButton != button) {
-                [existingButton removeFromSuperview];
-                bottomBar.pauseResumeDuringVideoButton = button;
-                [bottomBar addSubview:button];
-            }
-        } else
-            bottomBar.pauseResumeDuringVideoButton = nil;
-    } else {
-        CAMDynamicShutterControl *shutterControl = [self valueForKey:@"_dynamicShutterControl"];
-        if (!shouldNotEmbed) {
-            CUShutterButton *existingButton = shutterControl.pauseResumeDuringVideoButton;
-            if (existingButton != button) {
-                [existingButton removeFromSuperview];
-                shutterControl.pauseResumeDuringVideoButton = button;
-                [shutterControl addSubview:button];
-            }
-        } else
-            shutterControl.pauseResumeDuringVideoButton = nil;
-    }
 }
 
 %new(v@:@)
@@ -388,7 +359,9 @@ NSString *title(VideoConfigurationMode mode) {
     CAMElapsedTimeView *elapsedTimeView = self._elapsedTimeView;
     if (elapsedTimeView == nil)
         elapsedTimeView = [self.view valueForKey:@"_elapsedTimeView"];
-    [elapsedTimeView updateUI:pause recording:YES];
+    if ([elapsedTimeView respondsToSelector:@selector(updateUI:recording:)]) {
+        [elapsedTimeView performSelector:@selector(updateUI:recording:) withObject:@(pause) withObject:@(YES)];
+    }
     CUShutterButton *shutterButton = self._shutterButton;
     if (shutterButton) {
         UIColor *shutterColor = pause ? UIColor.systemYellowColor : ([shutterButton respondsToSelector:@selector(_innerCircleColorForMode:spinning:)] ? [shutterButton _innerCircleColorForMode:shutterButton.mode spinning:NO] : [shutterButton _colorForMode:shutterButton.mode]);
@@ -419,36 +392,6 @@ NSString *title(VideoConfigurationMode mode) {
     }
 }
 
-// Video configuration mode changer
-%new(v@:@)
-- (void)changeVideoConfigurationMode:(UITapGestureRecognizer *)gesture {
-    NSInteger cameraMode = self._currentGraphConfiguration.mode;
-    NSInteger cameraDevice = self._currentGraphConfiguration.device == 0 ? 0 : devices[self._currentGraphConfiguration.device - 1];
-    NSString *message = @"Select video configuration:";
-    UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"CameraBoost" message:message preferredStyle:UIAlertControllerStyleAlert];
-    NSMutableDictionary <NSString *, NSNumber *> *modes = [NSMutableDictionary dictionary];
-    VideoConfigurationMode currentVideoConfigurationMode = [[NSClassFromString(@"CAMUserPreferences") preferences] videoConfiguration];
-    CAMCaptureCapabilities *capabilities = [NSClassFromString(@"CAMCaptureCapabilities") capabilities];
-    for (VideoConfigurationMode mode = 0; mode < VideoConfigurationModeCount; ++mode) {
-        if (mode != currentVideoConfigurationMode) {
-            if ([capabilities isSupportedVideoConfiguration:mode forMode:cameraMode device:cameraDevice])
-                modes[title(mode)] = @(mode);
-        }
-    }
-    NSArray <NSString *> *sortedArray = [[modes allKeys] sortedArrayUsingSelector:@selector(localizedCaseInsensitiveCompare:)];
-    for (NSString *mode in sortedArray) {
-        UIAlertAction *action = [UIAlertAction actionWithTitle:mode style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-            [self _writeUserPreferences];
-            CFPreferencesSetAppValue(cameraMode == 2 ? CFSTR("CAMUserPreferenceSlomoConfiguration") : CFSTR("CAMUserPreferenceVideoConfiguration"), (CFNumberRef)modes[mode], CFSTR("com.apple.camera"));
-            CFPreferencesAppSynchronize(CFSTR("com.apple.camera"));
-            [self readUserPreferencesAndHandleChangesWithOverrides:0];
-        }];
-        [alert addAction:action];
-    }
-    UIAlertAction *defaultAction = [UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:nil];
-    [alert addAction:defaultAction];
-    [self presentViewController:alert animated:YES completion:nil];
-}
 
 // Control visibility updates
 - (void)updateControlVisibilityAnimated:(BOOL)animated {
